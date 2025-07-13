@@ -16,4 +16,7 @@ The assembler was implemented in Python, and the RTL model was implemented using
 [] FPU Control
 [] Pipelining and Hazard Control
 [] Other Features
+
 # Verification
+
+# Performance
