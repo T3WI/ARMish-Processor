@@ -5,17 +5,17 @@ The assembler was implemented in Python, and the RTL model was implemented using
 
 # Steps
 - [x] ISA Design
-- [] Assembler
-- [] Instruction Memory
-- [] Program Counter
-- [] Program Counter Adder
-- [] Register FIle
-- [] ALU
-- [] ALU Control
-- [] FPU
-- [] FPU Control
-- [] Pipelining and Hazard Control
-- [] Other Features
+- [ ] Assembler
+- [ ] Instruction Memory
+- [ ] Program Counter
+- [ ] Program Counter Adder
+- [ ] Register FIle
+- [ ] ALU
+- [ ] ALU Control
+- [ ] FPU
+- [ ] FPU Control
+- [ ] Pipelining and Hazard Control
+- [ ] Other Features
 
 # Verification
 
