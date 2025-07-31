@@ -1,0 +1,8 @@
+0:add.x-al r1, r2, r3
+4:addi.x-al r1, #9
+8:sub.x-al r1, r2, r3
+12:subi.x-al r1, #9
+16:adds.x-al r1, r2, r3
+20:addis.x-al r1, #9
+24:subs.x-al r1, r2, r3
+28:subis.x-al r1, #9
