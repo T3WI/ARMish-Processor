@@ -61,7 +61,8 @@ print('-' * 50)
 
 # right now just updates with pc and the instruction, need to remove line and output binary form of instruction
 def second_pass(token, lc, line):
-    return str(lc) + ":" + line 
+    machine_code = str(lc) + ":" + line 
+    return machine_code
 
 ### SECOND PASS
 print('-' * 50)

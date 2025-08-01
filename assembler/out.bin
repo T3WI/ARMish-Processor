@@ -6,3 +6,30 @@
 20:addis.x-al r1, #9
 24:subs.x-al r1, r2, r3
 28:subis.x-al r1, #9
+32:mul.x-eq r1, r2, r3
+36:muli.x-eq r1, r2, #9
+40:div.x-eq r1, r2, r3
+44:divi.x-eq r1, r2, #9
+48:mac.x-eq r1, r2, r3
+52:sqrt.x-eq r1, r2
+56:convf.x-eq r1, r2
+60:cmp.x-eq r1, r2
+64:add.f-al r1, r2, r3, #0
+68:sub.f-al r1, r2, r3, #0
+72:mul.f-eq r1, r2, r3, #0
+76:div.f-eq r1, r2, r3, #0
+80:mac.f-eq r1, r2, r3, #0
+84:sqrt.f-eq r1, r2, #0
+88:convx.f-eq r1, r2, #0
+92:cmp.f-eq r1, r2
+96:ldr r1, [r2, #8]
+100:str r1, [r2, #8]
+104:ldr r1, [r2, #-8]
+108:str r1, [r2, #-8]
+112:ldr r1, [r2, r3]
+116:str r1, [r2, r3]
+120:ldrb r1, [r2, #8]
+124:strb r1, [r2, #8]
+128:bx r1 
+132:b regd 
+136:bl regf
