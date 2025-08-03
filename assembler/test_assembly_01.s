@@ -4,9 +4,17 @@ add.x-al r1, r2, r3
 
 addi.x-al r1, #9
 
+add.x-al r1, r2, r3, lsl #2
+
+addi.x-al r1, #9, lsl #2
+
 sub.x-al r1, r2, r3
 
 subi.x-al r1, #9
+
+sub.x-al r1, r2, r3, lsl #2
+
+subi.x-al r1, #9, lsl #2
 
 adds.x-al r1, r2, r3
 

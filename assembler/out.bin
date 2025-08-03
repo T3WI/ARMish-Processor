@@ -1,35 +1,39 @@
 0:add.x-al r1, r2, r3
 4:addi.x-al r1, #9
-8:sub.x-al r1, r2, r3
-12:subi.x-al r1, #9
-16:adds.x-al r1, r2, r3
-20:addis.x-al r1, #9
-24:subs.x-al r1, r2, r3
-28:subis.x-al r1, #9
-32:mul.x-eq r1, r2, r3
-36:muli.x-eq r1, r2, #9
-40:div.x-eq r1, r2, r3
-44:divi.x-eq r1, r2, #9
-48:mac.x-eq r1, r2, r3
-52:sqrt.x-eq r1, r2
-56:convf.x-eq r1, r2
-60:cmp.x-eq r1, r2
-64:add.f-al r1, r2, r3, #0
-68:sub.f-al r1, r2, r3, #0
-72:mul.f-eq r1, r2, r3, #0
-76:div.f-eq r1, r2, r3, #0
-80:mac.f-eq r1, r2, r3, #0
-84:sqrt.f-eq r1, r2, #0
-88:convx.f-eq r1, r2, #0
-92:cmp.f-eq r1, r2
-96:ldr r1, [r2, #8]
-100:str r1, [r2, #8]
-104:ldr r1, [r2, #-8]
-108:str r1, [r2, #-8]
-112:ldr r1, [r2, r3]
-116:str r1, [r2, r3]
-120:ldrb r1, [r2, #8]
-124:strb r1, [r2, #8]
-128:bx r1 
-132:b regd 
-136:bl regf
+8:add.x-al r1, r2, r3, lsl #2
+12:addi.x-al r1, #9, lsl #2
+16:sub.x-al r1, r2, r3
+20:subi.x-al r1, #9
+24:sub.x-al r1, r2, r3, lsl #2
+28:subi.x-al r1, #9, lsl #2
+32:adds.x-al r1, r2, r3
+36:addis.x-al r1, #9
+40:subs.x-al r1, r2, r3
+44:subis.x-al r1, #9
+48:mul.x-eq r1, r2, r3
+52:muli.x-eq r1, r2, #9
+56:div.x-eq r1, r2, r3
+60:divi.x-eq r1, r2, #9
+64:mac.x-eq r1, r2, r3
+68:sqrt.x-eq r1, r2
+72:convf.x-eq r1, r2
+76:cmp.x-eq r1, r2
+80:add.f-al r1, r2, r3, #0
+84:sub.f-al r1, r2, r3, #0
+88:mul.f-eq r1, r2, r3, #0
+92:div.f-eq r1, r2, r3, #0
+96:mac.f-eq r1, r2, r3, #0
+100:sqrt.f-eq r1, r2, #0
+104:convx.f-eq r1, r2, #0
+108:cmp.f-eq r1, r2
+112:ldr r1, [r2, #8]
+116:str r1, [r2, #8]
+120:ldr r1, [r2, #-8]
+124:str r1, [r2, #-8]
+128:ldr r1, [r2, r3]
+132:str r1, [r2, r3]
+136:ldrb r1, [r2, #8]
+140:strb r1, [r2, #8]
+144:bx r1 
+148:b regd 
+152:bl regf
