@@ -2,35 +2,35 @@ regx:
 
 add.x-al r1, r2, r3
 
-addi.x-al r1, #9
+add.x-al r1, #9
 
 add.x-al r1, r2, r3, lsl #2
 
-addi.x-al r1, #9, lsl #2
+add.x-al r1, #9, lsl #2
 
 sub.x-al r1, r2, r3
 
-subi.x-al r1, #9
+sub.x-al r1, #9
 
 sub.x-al r1, r2, r3, lsl #2
 
-subi.x-al r1, #9, lsl #2
+sub.x-al r1, #9, lsl #2
 
 adds.x-al r1, r2, r3
 
-addis.x-al r1, #9
+adds.x-al r1, #9
 
 subs.x-al r1, r2, r3
 
-subis.x-al r1, #9
+subs.x-al r1, #9
 
 mul.x-eq r1, r2, r3
 
-muli.x-eq r1, r2, #9
+mul.x-eq r1, r2, #9
 
 div.x-eq r1, r2, r3
 
-divi.x-eq r1, r2, #9
+div.x-eq r1, r2, #9
 
 mac.x-eq r1, r2, r3
 
@@ -80,6 +80,6 @@ regb:
 
 bx r1 
 
-b regd 
+b regd
 
 bl regf

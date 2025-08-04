@@ -2,6 +2,8 @@ import sys
 import csv
 import re
 
+FORMAT_DEBUG = 1
+FORMAT_PROD = 0
 
 if len(sys.argv) < 2:
     print("Usage: python assembler.py <filename.s>")
@@ -59,10 +61,20 @@ print('-' * 50)
 print("FIRST PASS COMPLETE")
 print('-' * 50)
 
-# right now just updates with pc and the instruction, need to remove line and output binary form of instruction
+# right now just updates with pc and the instruction
+def format_machine_code(machine_code, lc, line, format=FORMAT_PROD):
+    if format == 1:
+        formatted_machine_code = str(lc) + "\t:" + "\t\t" + machine_code + "\t(" + line + ")\n" 
+    else:
+        formatted_machine_code = str(lc) + "\t:" + "\t\t" + machine_code + "\n" 
+    return formatted_machine_code
+
 def second_pass(token, lc, line):
-    machine_code = str(lc) + ":" + line 
-    return machine_code
+    machine_code = "0101_11_1_0_1010_0111_0001_0_001_10101010" # TODO
+
+    
+    machine_code_f = format_machine_code(machine_code, lc, line, FORMAT_DEBUG)                      # debug line
+    return machine_code_f
 
 ### SECOND PASS
 print('-' * 50)
@@ -84,7 +96,7 @@ with open("out.bin", "w") as f:
 
                 ###
                 # TODO: SECOND PASS
-                instr_bin = second_pass(token, lc, line)
+                instr_bin = second_pass(token, lc, line[:-1])
                 ###     
 
 
