@@ -4,7 +4,7 @@ This project seeks to explore a subset of the ARM instruction set. The goal is t
 The assembler was implemented in Python, and the RTL model was implemented using SystemVerilog.
 
 # Progress
-- [x] ISA Design
+- [ ] ISA Design
 - [ ] Assembler
 - [ ] Instruction Memory
 - [ ] Program Counter
@@ -12,9 +12,10 @@ The assembler was implemented in Python, and the RTL model was implemented using
 - [ ] Register FIle
 - [ ] ALU
 - [ ] ALU Control
+- [ ] Pipelining and Hazard Control
+- [ ] op3 Instructions
 - [ ] FPU
 - [ ] FPU Control
-- [ ] Pipelining and Hazard Control
 - [ ] Other Features
 
 # Verification
