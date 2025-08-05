@@ -12,9 +12,10 @@ The assembler was implemented in Python, and the RTL model was implemented using
 - [ ] Register FIle
 - [ ] ALU
 - [ ] ALU Control
+- [ ] Pipelining and Hazard Control
+- [ ] op3 Instructions
 - [ ] FPU
 - [ ] FPU Control
-- [ ] Pipelining and Hazard Control
 - [ ] Other Features
 
 # Verification
