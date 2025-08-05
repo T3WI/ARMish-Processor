@@ -112,12 +112,36 @@ print('-' * 50)
 print("FIRST PASS COMPLETE")
 print('-' * 50)
 
+def make_binary_readable(binary):
+    result = '_'.join(binary[i:i+4] for i in range(0, len(binary), 4))
+    return result
+
+def make_hex_readable(hex):
+    result = '_'.join(hex[i:i+2] for i in range(0, len(hex), 2))
+    return result
+
+def make_mc_readable(mc):
+    instr_type = set_instr_type(mc[4:6])
+    if instr_type == Instruction_Type.R:
+        return mc[0:4] + "_" + mc[4:6] + "_" + mc[6:10]
+    elif instr_type == Instruction_Type.OP3:
+        return mc[0:4] + "_" + mc[4:6] + "_" + mc[6:10]
+    elif instr_type == Instruction_Type.D:
+        return mc[0:4] + "_" + mc[4:6] + "_" + mc[6:10]
+    elif instr_type == Instruction_Type.B:
+        return mc[0:4] + "_" + mc[4:6] + "_" + mc[6:10]
+
 # right now just updates with pc and the instruction
 def format_machine_code(machine_code, lc, line, output_mode=Formatter.PROD):
     if output_mode == Formatter.DEBUG:
         binary_lc = format(lc, '08b')
         hex_lc = format(lc, '08x')
-        return f"{lc:>3} ({binary_lc}) ({hex_lc}):\t{machine_code}\t({line})\n"
+        
+        r_binary_lc = make_binary_readable(binary_lc)
+        r_hex_lc = make_hex_readable(hex_lc)
+        r_machine_code = make_mc_readable(machine_code)
+
+        return f"{lc:>3} ({r_binary_lc}) ({r_hex_lc}):\t{r_machine_code}\t({line})\n"
     else:
         binary_lc = format(lc, '08b')
         return f"{binary_lc} :\t{machine_code}\n"
@@ -139,13 +163,13 @@ def parse_r(token):
     set_cpsr = 0
     cond_bits = ""
     r_d = ""
+    ############################### PARSING OPCODE FIELD ###############################
     operation_bits = mneumonics[token[0]]
-
-
+    ################################ PARSING COND FIELD ################################
     if token[1] == '.':
         if token[2] == 's':
             set_cpsr = 1
-        # if I need more . flags, add more
+        # if I need more '.' flags, add more
     if token[1] == '-':
         cond_bits = cond[token[2]]
 
@@ -155,11 +179,13 @@ def parse_r(token):
     if token[3][:1] == 'r':
         r_d = token[3][:-1]
 
+    ############################### PARSING OPERANDS ###################################
+
     
     machine_code = cond_bits + operation_bits
     return machine_code
 
-# TODO: PARSE BITS 21:0
+# TODO: PARSE BITS 31:0
 def parse_op3(token):
     set_cpsr = 0
     operation_bits = token[0]
@@ -168,17 +194,21 @@ def parse_op3(token):
     machine_code = operation_bits
     return machine_code
 
-# TODO: PARSE BITS 31:0
+# TODO: PARSE BITS 21:0
 def parse_d(token):
+    ############################### PARSING OPCODE FIELD ###############################
     operation_bits = mneumonics[token[0]]
+    ################################ PARSING COND FIELD ################################
     cond_bits = cond[token[2]]
 
     machine_code = cond_bits + operation_bits
     return machine_code
 
-# TODO: PARSE BITS 31:0
+# TODO: PARSE BITS 21:0
 def parse_b(token):
+    ################################ PARSING OPCODE FIELD ################################
     operation_bits = mneumonics[token[0]]
+    ################################ PARSING COND FIELD ################################
     cond_bits = cond[token[2]]
 
     machine_code = cond_bits + operation_bits
