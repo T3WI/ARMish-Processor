@@ -192,13 +192,15 @@ def parse_r(token):
 
     ############################### PARSING OPERANDS ###################################
     token_length = len(token)
-    if token_length == 6:
-        I = '0'
-        S = '0'
-        op2 = '0'*12
-        r_d = get_reg_number(token[3])
-        r_n = get_reg_number(token[5])
-        
+    match token_length:
+        case 6:
+            I = '0'
+            S = '0'
+            op2 = '0'*12
+            r_d = get_reg_number(token[3])
+            r_n = get_reg_number(token[5])
+
+    
     
     ############################# SITCHING MACHINE CODE ################################
     machine_code = cond_bits + operation_bits + I + S + r_n + r_d + op2
@@ -249,7 +251,7 @@ def second_pass(token, lc, line):
         machine_code = parse_r(token)
         # if len(token) == 9:
         #     print(line)
-        # print(machine_code)
+        print(machine_code)
     elif instr_type == Instruction_Type.OP3:
         machine_code =  parse_op3(token)
     elif instr_type == Instruction_Type.D:
