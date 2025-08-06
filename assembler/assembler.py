@@ -101,7 +101,7 @@ with open(assembly_file, 'r') as file:
         else: 
             # Split by commas and whitespace
             token = re.findall(r'\w+|[^\s\w]', line)
-            print(lc, ":", token)
+            print(lc, ":", token, " len:", len(token))
             # Identify labels and store in symbol table
             if token[1] == ':':
                 symbols[token[0]] = lc
@@ -112,6 +112,7 @@ print('-' * 50)
 print("FIRST PASS COMPLETE")
 print('-' * 50)
 
+### HELPER FUNCTIONS FOR SECOND PASS
 def make_binary_readable(binary):
     result = '_'.join(binary[i:i+4] for i in range(0, len(binary), 4))
     return result
@@ -135,7 +136,7 @@ def make_mc_readable(mc):
 def format_machine_code(machine_code, lc, line, output_mode=Formatter.PROD):
     if output_mode == Formatter.DEBUG:
         binary_lc = format(lc, '08b')
-        hex_lc = format(lc, '08x')
+        hex_lc = format(lc, '02x')
         
         r_binary_lc = make_binary_readable(binary_lc)
         r_hex_lc = make_hex_readable(hex_lc)
@@ -158,11 +159,21 @@ def set_instr_type(mneumonic_code):
     else:
         raise Exception("Invalid Type")
     
+def get_reg_number(reg):
+    reg_as_number = int(reg[1:])
+    bin_reg = format(reg_as_number, '04b')
+    reg_string = f"{bin_reg}"
+    return reg_string
+
 # TODO: PARSE BITS 21:0
 def parse_r(token):
     set_cpsr = 0
     cond_bits = ""
+    I = ""
+    S = ""
+    r_n = ""
     r_d = ""
+    op2 = ""
     ############################### PARSING OPCODE FIELD ###############################
     operation_bits = mneumonics[token[0]]
     ################################ PARSING COND FIELD ################################
@@ -176,13 +187,21 @@ def parse_r(token):
 
     if token[3] == '-':
         cond_bits = cond[token[4]]
-    if token[3][:1] == 'r':
-        r_d = token[3][:-1]
+    # if token[3][:1] == 'r':
+    #     r_d = get_reg_number(token[3])
 
     ############################### PARSING OPERANDS ###################################
-
+    token_length = len(token)
+    if token_length == 6:
+        I = '0'
+        S = '0'
+        op2 = '0'*12
+        r_d = get_reg_number(token[3])
+        r_n = get_reg_number(token[5])
+        
     
-    machine_code = cond_bits + operation_bits
+    ############################# SITCHING MACHINE CODE ################################
+    machine_code = cond_bits + operation_bits + I + S + r_n + r_d + op2
     return machine_code
 
 # TODO: PARSE BITS 31:0
@@ -223,11 +242,14 @@ def second_pass(token, lc, line):
     instr_type = ""
     r_n = ""
     r_d = ""
-
+    
     mneumonic_code = mneumonics[token[0]]
     instr_type = set_instr_type(mneumonic_code)
     if instr_type == Instruction_Type.R:
         machine_code = parse_r(token)
+        # if len(token) == 9:
+        #     print(line)
+        # print(machine_code)
     elif instr_type == Instruction_Type.OP3:
         machine_code =  parse_op3(token)
     elif instr_type == Instruction_Type.D:
