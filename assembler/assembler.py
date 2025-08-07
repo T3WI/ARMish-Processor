@@ -202,16 +202,20 @@ def get_immediate_r(imm):
     rot = ''
     shifted_imm = bin_imm
     
+    enc_success = 0
     while idx_rot < 16:
         shifted_imm = bin_imm[-idx_rot:] + bin_imm[:-idx_rot]
         dec_imm = int(shifted_imm, 2)
         if(dec_imm == int_imm):
             rot = str(bin(idx_rot))[2:].zfill(4)
+            enc_success = 1
             break
         idx_rot += 1
 
+    if enc_success == 0:
+        raise Exception("Immediate not encodable")
     op2 = rot + imm8
-    return '_' + make_binary_readable(op2)
+    return op2
 
 # TODO: PARSE BITS 21:0
 def parse_r(token):
