@@ -14,7 +14,7 @@ addx-al r1, r5, #452
 
 addx.s-al r1, r2, r3
 
-addx.s-al r10, #9
+addx.s-al r10, r14, #9
 
 addx.s-al r1, r2, r3, lsl r4
 
@@ -38,7 +38,7 @@ subx-al r1, r5, #452
 
 subx.s-al r1, r2, r3
 
-subx.s-al r10, #9
+subx.s-al r10, r14, #9
 
 subx.s-al r1, r2, r3, lsl r4
 
@@ -62,7 +62,7 @@ andx-al r2, r1, #0x00FF
 
 orrx-al r3, r1, r2
 
-orrx-al r2, r1, #0x1111
+orrx-al r2, r1, #0x1100
 
 
 

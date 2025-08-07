@@ -13,6 +13,14 @@ class Instruction_Type(Enum):
     D = 2
     B = 3
 
+class Shtype(Enum):
+    ROR = '00'
+    ASR = '01'
+    LSR = '10'
+    LSL = '11'
+
+
+
 if len(sys.argv) < 2:
     print("Usage: python assembler.py <filename.s>")
     sys.exit(1)
@@ -82,11 +90,7 @@ cond = {
     "eq": "1111",
 }
 
-# instead add "s" at the end on whether or not to alter code and parse the pnemonic. e.g. When getting to the mneumonic, look through the pneumonic until an "s" is reached
-# alter_code = {
-#     "s": "1",
-#     "n": "0"
-# }
+
 
 ### FIRST PASS
 print('-' * 50)
@@ -112,16 +116,26 @@ print('-' * 50)
 print("FIRST PASS COMPLETE")
 print('-' * 50)
 
-### HELPER FUNCTIONS FOR SECOND PASS
 def make_binary_readable(binary):
+    """
+        Makes a binary string more readable in the debug format of the output binary.
+        0000000000000000 => 0000_0000_0000_0000
+    """
     result = '_'.join(binary[i:i+4] for i in range(0, len(binary), 4))
     return result
 
 def make_hex_readable(hex):
+    """
+        Makes a hex string more readable in the debug format of the output binary.
+        0000000000000000 => 00_00_00_00_00_00_00_00
+    """
     result = '_'.join(hex[i:i+2] for i in range(0, len(hex), 2))
     return result
 
 def make_mc_readable(mc):
+    """
+        Makes the machine code more readable depending on the instruction being called.
+    """
     instr_type = set_instr_type(mc[4:6])
     if instr_type == Instruction_Type.R:
         return mc[0:4] + "_" + mc[4:6] + "_" + mc[6:10]
@@ -165,15 +179,50 @@ def get_reg_number(reg):
     reg_string = f"{bin_reg}"
     return reg_string
 
+def strip_leading_trailing_zeros(binary):
+    stripped = binary.lstrip('0').rstrip('0')
+    return stripped
+
+def get_immediate_r(imm):
+
+    # Convert to binary
+    bin_imm = ''
+    int_imm = 0                     # decimal value of immediate (format: int)
+    if(imm[:2] == '0x'):            # Hex Input immediate
+        int_imm = int(imm, 16)
+    else:                           # Dec Input immediate
+        int_imm = int(imm)    
+    bin_imm = bin(int_imm)[2:]      # binary value of immediate (format: string)
+    bin_imm = strip_leading_trailing_zeros(bin_imm)
+    imm8 = bin_imm.zfill(8)
+    bin_imm = bin_imm.zfill(16)        # Convert to 32b
+
+    # find rot
+    idx_rot = 0
+    rot = ''
+    shifted_imm = bin_imm
+    
+    while idx_rot < 16:
+        shifted_imm = bin_imm[-idx_rot:] + bin_imm[:-idx_rot]
+        dec_imm = int(shifted_imm, 2)
+        if(dec_imm == int_imm):
+            rot = str(bin(idx_rot))[2:].zfill(4)
+            break
+        idx_rot += 1
+
+    op2 = rot + imm8
+    return '_' + make_binary_readable(op2)
+
 # TODO: PARSE BITS 21:0
 def parse_r(token):
     set_cpsr = 0
-    cond_bits = ""
-    I = ""
-    S = ""
-    r_n = ""
-    r_d = ""
-    op2 = ""
+    cond_bits = ''
+    I = '0'
+    S = '0'
+    r_n = ''
+    r_d = ''
+    r_m = ''
+    op2 = ''
     ############################### PARSING OPCODE FIELD ###############################
     operation_bits = mneumonics[token[0]]
     ################################ PARSING COND FIELD ################################
@@ -196,9 +245,34 @@ def parse_r(token):
         case 6:
             I = '0'
             S = '0'
-            op2 = '0'*12
             r_d = get_reg_number(token[3])
             r_n = get_reg_number(token[5])
+            op2 = '0'*12
+        case 8:
+            I = '0'
+            S = '0'
+            r_d = get_reg_number(token[3])
+            r_n = get_reg_number(token[5])
+            shtype = Shtype.LSL.value
+            shamt = '0'*5
+            r_shift = '0'
+            r_m = get_reg_number(token[7])
+            op2 = shtype + shamt + r_shift + r_m
+        case 9:
+            I = '1'
+            S = '0'
+            r_d = get_reg_number(token[3])
+            r_n = get_reg_number(token[5])
+            op2 = get_immediate_r(token[8])
+            
+            
+        case _:
+            I = 'X'
+            S = 'X'
+            op2 = 'X'*12
+            r_d = 'XXXX'
+            r_n = 'XXXX'
+            # raise Exception("Invalid case")
 
     
     
@@ -249,7 +323,7 @@ def second_pass(token, lc, line):
     instr_type = set_instr_type(mneumonic_code)
     if instr_type == Instruction_Type.R:
         machine_code = parse_r(token)
-        # if len(token) == 9:
+        # if len(token) == 15:
         #     print(line)
         print(machine_code)
     elif instr_type == Instruction_Type.OP3:
@@ -258,10 +332,13 @@ def second_pass(token, lc, line):
         machine_code =  parse_d(token)
     elif instr_type == Instruction_Type.B:
         machine_code =  parse_b(token)
+    else:
+        raise Exception("Invalid Instruction Type")
 
 
     # CHANGE THE 4TH ARGUMENT TO CHANGE THE OUTPUT FORMAT OF THE BIN
     machine_code_f = format_machine_code(machine_code, lc, line, Formatter.DEBUG)                      # debug line
+    # print(machine_code_f)
     return machine_code_f
 
 ### SECOND PASS
