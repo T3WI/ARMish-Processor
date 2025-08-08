@@ -148,6 +148,9 @@ def make_mc_readable(mc):
 
 # right now just updates with pc and the instruction
 def format_machine_code(machine_code, lc, line, output_mode=Formatter.PROD):
+    """
+        Formats the out.bin depending on whether or not the debug format or the production format is desired. The debug format makes the hex and bin values in out.bin more readable
+    """
     if output_mode == Formatter.DEBUG:
         binary_lc = format(lc, '08b')
         hex_lc = format(lc, '02x')
@@ -162,6 +165,9 @@ def format_machine_code(machine_code, lc, line, output_mode=Formatter.PROD):
         return f"{binary_lc} :\t{machine_code}\n"
     
 def set_instr_type(mneumonic_code):
+    """
+        Given 10 the first 10 bits parsed from the instruction, determines the instruction type
+    """
     if mneumonic_code[:2] == "11":
         return Instruction_Type.R
     elif mneumonic_code[:2] == "10":
@@ -174,17 +180,27 @@ def set_instr_type(mneumonic_code):
         raise Exception("Invalid Type")
     
 def get_reg_number(reg):
+    """
+        Given a string that represents a register (e.g. r1, r2, r3), output the number of the register in binary. If it is the name of a special register (lr, pc), output the input reg
+    """
+    if reg == "lr" or reg == "pc":
+        return reg
     reg_as_number = int(reg[1:])
     bin_reg = format(reg_as_number, '04b')
     reg_string = f"{bin_reg}"
     return reg_string
 
 def strip_leading_trailing_zeros(binary):
+    """
+        Removes leading zeros and trailing zeros from a binary number. used for calculating immediates
+    """
     stripped = binary.lstrip('0').rstrip('0')
     return stripped
 
 def get_immediate_r(imm):
-
+    """
+        Calculates immediates for instructions that use immediates. 
+    """
     # Convert to binary
     bin_imm = ''
     int_imm = 0                     # decimal value of immediate (format: int)
@@ -219,6 +235,9 @@ def get_immediate_r(imm):
 
 # TODO: PARSE BITS 21:0
 def parse_r(token):
+    """
+        Parses an R-type instruction that has been tokenized into different components, and outputs the machine code representation of the instruction
+    """
     set_cpsr = 0
     cond_bits = ''
     I = '0'
@@ -286,6 +305,9 @@ def parse_r(token):
 
 # TODO: PARSE BITS 31:0
 def parse_op3(token):
+    """
+        Parses an op3-type instruction that has been tokenized into different components, and outputs the machine code representation of the instruction
+    """
     set_cpsr = 0
     operation_bits = token[0]
 
@@ -295,6 +317,9 @@ def parse_op3(token):
 
 # TODO: PARSE BITS 21:0
 def parse_d(token):
+    """
+        Parses a D-type instruction that has been tokenized into different components, and outputs the machine code representation of the instruction
+    """
     ############################### PARSING OPCODE FIELD ###############################
     operation_bits = mneumonics[token[0]]
     ################################ PARSING COND FIELD ################################
@@ -305,6 +330,9 @@ def parse_d(token):
 
 # TODO: PARSE BITS 21:0
 def parse_b(token):
+    """
+        Parses an B-type instruction that has been tokenized into different components, and outputs the machine code representation of the instruction
+    """
     ################################ PARSING OPCODE FIELD ################################
     operation_bits = mneumonics[token[0]]
     ################################ PARSING COND FIELD ################################
@@ -315,6 +343,9 @@ def parse_b(token):
 
 
 def second_pass(token, lc, line):
+    """
+        Executes the second pass of the assembler. Each instruction line of the program is parsed and replaced with the instruction binary representation.
+    """
     dot_flag = 0
     dash_flag = 0
     set_cpsr_true = 0
