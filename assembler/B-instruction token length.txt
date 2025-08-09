@@ -1,4 +1,0 @@
-0001001000                       : bx-al lr                                 : len: 4
-0001000000                       : b-al regd                                : len: 4
-1111000000                       : b-eq regb                                : len: 4
-0001000100                       : bl-al regx                               : len: 4
