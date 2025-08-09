@@ -5,7 +5,7 @@ The assembler was implemented in Python, and the RTL model was implemented using
 
 # Progress
 - [x] ISA Design
-- [ ] Assembler
+- [x] Assembler
 - [ ] Instruction Memory
 - [ ] Program Counter
 - [ ] Program Counter Adder
