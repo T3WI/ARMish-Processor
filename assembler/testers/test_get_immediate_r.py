@@ -2,7 +2,7 @@ def strip_leading_trailing_zeros(binary):
     stripped = binary.lstrip('0').rstrip('0')
     return stripped
 
-def get_immediate_r(imm):
+def get_immediate(imm):
 
     # Convert to binary
     bin_imm = ''
@@ -43,7 +43,7 @@ def ror(val, r_bits, width):
 
 for test_num in range(65536):
     str_test_num = str(test_num)
-    output = get_immediate_r(str_test_num)
+    output = get_immediate(str_test_num)
     rot = output[0:4]
     imm8 = output[4:]
     

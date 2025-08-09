@@ -131,25 +131,52 @@ xorx-al r2, r1, #0x0FF0
 
 regd:
 
-ldw-al r2, [r1, #2]
+ldw-al r1, [r14, #2]
 
-ldw-al r2, [r1, #-2]
+ldw-al r1, [r14, r2]
 
-ldw-al r2, [r1, r3]
+ldw-al r1, [r14, r2, lsl #8]
 
-ldb2l-al r2, [r1, #0]
+ldw-al r1, [r14, r2, lsl r9]
 
-stw-al r2, [r1, #2]
+ldw-al r1, [r14, #-2]
 
-stw-al r2, [r1, #-2]
+ldw-al r1, [r14, -r2]
 
-stw-al r2, [r1, r3]
 
-stb2l-al r2, [r1, #0]
+
+ldb2l-al r1, [r14, #2]
+
+ldb2l-al r1, [r14, r2]
+
+ldb2l-al r1, [r14, r2, lsl #8]
+
+ldb2l-al r1, [r14, r2, lsl r9]
+
+ldb2l-al r1, [r14, #-2]
+
+ldb2l-al r1, [r14, -r2]
+
+
+
+ldb2h-al r1, [r14, #2]
+
+ldb2h-al r1, [r14, r2]
+
+ldb2h-al r1, [r14, r2, lsl #8]
+
+ldb2h-al r1, [r14, r2, lsl r9]
+
+ldb2h-al r1, [r14, #-2]
+
+ldb2h-al r1, [r14, -r2]
+
 
 regb:
 
 bx-al lr
+
+b-eq other
 
 b-al regd
 
@@ -158,3 +185,7 @@ subx.s-al r0, r1, r2
 b-eq regb
 
 bl-al regx
+
+other:
+
+xorx-al r3, r1, r2

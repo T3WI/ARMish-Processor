@@ -1,0 +1,12 @@
+10:
+ldw-al r1, [r14, r2]
+ldb2l-al r1, [r14, r2]
+ldb2h-al r1, [r14, r2]
+
+11:
+ldw-al r1, [r14, #2]
+ldw-al r1, [r14, -r2]
+ldb2l-al r1, [r14, #2]
+ldb2l-al r1, [r14, -r2]
+ldb2h-al r1, [r14, #2]
+ldb2h-al r1, [r14, -r2]

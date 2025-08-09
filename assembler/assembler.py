@@ -3,6 +3,9 @@ import csv
 import re
 from enum import Enum
 
+INSTRUCTION_SIZE = 4            # instruction size in bytes
+PIPELINE_CORRECTION = 4
+
 class Formatter(Enum):
     PROD = 0
     DEBUG = 1
@@ -49,9 +52,9 @@ mneumonics = {
     "stb2l": "010100",
     "stb2h": "010101",
 
-    "bx": "001000",
-    "b": "000000",
-    "bl": "000100"
+    "bx": "0010",
+    "b": "0000",
+    "bl": "0001"
 
     
 
@@ -132,11 +135,11 @@ def make_mc_readable(mc : str):
     if instr_type == Instruction_Type.RX:
         return mc[0:4] + "_" + mc[4:6] + "_" + mc[6:10] + "_" + mc[10:12] + "_" + mc[12:16] + "_" + mc[16:20] + "_" +  mc[20:33]
     elif instr_type == Instruction_Type.RF:
-        return mc[0:4] + "_" + mc[4:6] + "_" + mc[6:10]
+        return mc[0:4] + "_" + mc[4:6] + "_" + mc[6:10] 
     elif instr_type == Instruction_Type.D:
-        return mc[0:4] + "_" + mc[4:6] + "_" + mc[6:10]
+        return mc[0:4] + "_" + mc[4:6] + "_" + mc[6:10] + "_" + mc[10:12] + "_" + mc[12:16] + "_" + mc[16:20] + "_" +  mc[20:33]
     elif instr_type == Instruction_Type.B:
-        return mc[0:4] + "_" + mc[4:6] + "_" + mc[6:10]
+        return mc[0:4] + "_" + mc[4:8] + "_" + mc[8:33]
 
 # right now just updates with pc and the instruction
 def format_machine_code(machine_code: str, lc, line: str, output_mode=Formatter.PROD):
@@ -144,16 +147,16 @@ def format_machine_code(machine_code: str, lc, line: str, output_mode=Formatter.
         Formats the out.bin depending on whether or not the debug format or the production format is desired. The debug format makes the hex and bin values in out.bin more readable
     """
     if output_mode == Formatter.DEBUG:
-        binary_lc = format(lc, '08b')
+        binary_lc = format(lc, '016b')
         hex_lc = format(lc, '04x')
         
         r_binary_lc = make_binary_readable(binary_lc)
         r_hex_lc = make_hex_readable(hex_lc)
         r_machine_code = make_mc_readable(machine_code)
 
-        return f"{lc:>3} ({r_binary_lc}) ({r_hex_lc}):\t{r_machine_code}\t({line})\n"
+        return f"{lc:>4} ({r_binary_lc}) ({r_hex_lc}):\t{r_machine_code}\t({line})\n"
     else:
-        binary_lc = format(lc, '08b')
+        binary_lc = format(lc, '016b')
         return f"{binary_lc} :\t{machine_code}\n"
     
 def set_instr_type(mneumonic_code: str):
@@ -175,9 +178,13 @@ def get_reg_number(reg: str):
     """
         Given a string that represents a register (e.g. r1, r2, r3), output the number of the register in binary. If it is the name of a special register (lr, pc), output the input reg
     """
-    if reg == "lr" or reg == "pc":
-        return reg
-    reg_as_number = int(reg[1:])
+    reg_string = ''
+    if reg == "lr":
+        reg_as_number = 14
+    elif reg == "pc":
+        reg_as_number = 15
+    else:
+        reg_as_number = int(reg[1:])
     bin_reg = format(reg_as_number, '04b')
     reg_string = f"{bin_reg}"
     return reg_string
@@ -189,7 +196,7 @@ def strip_leading_trailing_zeros(binary: str):
     stripped = binary.lstrip('0').rstrip('0')
     return stripped
 
-def get_immediate_r(imm: str):
+def get_immediate(imm: str):
     """
         Calculates immediates for instructions that use immediates. 
     """
@@ -284,13 +291,13 @@ def parse_rx(token):
             S = '1'
             r_d = get_reg_number('r0')
             r_n = get_reg_number(token[3])
-            op2 = get_immediate_r(token[6])
+            op2 = get_immediate(token[6])
         case 8:
             I = '0'
             S = '0'
             r_d = get_reg_number(token[3])
             r_n = get_reg_number(token[5])
-            shtype = Shtype.LSL.value
+            shtype = Shtype.ROR.value
             shamt = '0'*5
             r_shift = '0'
             r_m = get_reg_number(token[7])
@@ -300,7 +307,7 @@ def parse_rx(token):
             S = '0'
             r_d = get_reg_number(token[3])
             r_n = get_reg_number(token[5])
-            op2 = get_immediate_r(token[8])
+            op2 = get_immediate(token[8])
         case 10:
             I = '0'
             S = '1'
@@ -319,7 +326,7 @@ def parse_rx(token):
                     S = '1'
                     r_d = get_reg_number(token[5])
                     r_n = get_reg_number(token[7])
-                    op2 = get_immediate_r(token[10])
+                    op2 = get_immediate(token[10])
             else:
                 r_d = get_reg_number(token[3])
                 r_n = get_reg_number(token[5])
@@ -360,12 +367,7 @@ def parse_rx(token):
             r_m = get_reg_number(token[9])
             op2 = shtype + shamt + r_shift + r_m
         case _:
-            I = 'X'
-            S = 'X'
-            op2 = 'X'*12
-            r_d = 'XXXX'
-            r_n = 'XXXX'
-            # raise Exception("Invalid case")
+            raise Exception("Invalid instruction. Check for syntax errors.")
 
     
     
@@ -389,28 +391,145 @@ def parse_d(token):
     """
         Parses a D-type instruction that has been tokenized into different components, and outputs the machine code representation of the instruction
     """
+    cond_bits = ''
+    U = ''
+    I = ''
+    S = ''
+    r_n = ''
+    r_d = ''
+    r_m = ''
+    offset = ''
     ############################### PARSING OPCODE FIELD ###############################
     operation_bits = mneumonics[token[0]]
     ################################ PARSING COND FIELD ################################
-    cond_bits = cond[token[2]]
+    if token[1] == '-':
+        cond_bits = cond[token[2]]
+    elif token[3] == '-':
+        cond_bits = cond[token[4]]
+    else:
+        raise Exception("No valid condition flags")
+    
+    token_length = len(token)
+    match token_length:
+        case 10:
+            U = '1'
+            I = '0'
+            r_n = get_reg_number(token[6])
+            r_d = get_reg_number(token[3])
+            shtype = Shtype.ROR.value
+            shamt = '0'*5
+            r_shift = '0'
+            r_m = get_reg_number(token[8])
+            offset = shtype + shamt + r_shift + r_m
+        case 11:
+            if token[8] == '-':
+                U = '0'
+                I = '0'
+                shtype = Shtype.ROR.value 
+                shamt = '0'*5
+                r_shift = '0'
+                r_m = get_reg_number(token[9])
+                offset = shtype + shamt + r_shift + r_m
+            elif token[8] == '#':
+                U = '1'
+                I = '1'
+                offset = get_immediate(token[9])
+            else:
+                raise Exception("Innvalid offset. Check for syntax errors.")
+            r_n = get_reg_number(token[6])
+            r_d = get_reg_number(token[3])
+        case 12:
+            U = '0'
+            I = '1'
+            r_d = get_reg_number(token[3])
+            r_n = get_reg_number(token[6])
+            offset = get_immediate(token[10])
+        case 13:
+            U = '1'
+            I = '0'
+            r_d = get_reg_number(token[3])
+            r_n = get_reg_number(token[6])
+            shtype = convert_string_shtype_to_enum(token[10]).value 
+            r_s = get_reg_number(token[11])
+            r_shift = '1'
+            r_m = get_reg_number(token[8])
+            offset = shtype + r_s + '0' + r_shift + r_m
+        case 14:
+            U = '1'
+            I = '0'
+            r_d = get_reg_number(token[3])
+            r_n = get_reg_number(token[6])
+            shtype = convert_string_shtype_to_enum(token[10]).value
+            shamt = format(int(token[12]), "05b")
+            r_shift = '0'
+            r_m = get_reg_number(token[8])
+            offset = shtype + shamt + r_shift + r_m
+        case _:
+            raise Exception("Invalid instruction. Check for syntax errors.")
 
-    machine_code = cond_bits + operation_bits
+    machine_code = cond_bits + operation_bits + U + I + r_n + r_d + offset
     return machine_code
 
-# TODO: PARSE BITS 21:0
-def parse_b(token):
+def conv_to_2s(value, bits):
+    if value < 0:
+        value = (1 << bits) + value
+    return format(value, f'0{bits}b')
+
+def find_branching_offset(label_address : int, lc : int):
+    offset_int = (label_address - (lc + PIPELINE_CORRECTION)) // INSTRUCTION_SIZE
+    offset = conv_to_2s(offset_int, 24)
+    return offset
+
+def parse_b(token, lc):
     """
         Parses an B-type instruction that has been tokenized into different components, and outputs the machine code representation of the instruction
     """
-    ################################ PARSING OPCODE FIELD ################################
+    cond_bits = ''
+    r_b = ''
+    R = ''
+    L = ''
+    offset = ''
+    ############################### PARSING OPCODE FIELD ###############################
     operation_bits = mneumonics[token[0]]
     ################################ PARSING COND FIELD ################################
-    cond_bits = cond[token[2]]
+    if token[1] == '-':
+        cond_bits = cond[token[2]]
+    elif token[3] == '-':
+        cond_bits = cond[token[4]]
+    else:
+        raise Exception("No valid condition flags")
+    
+    match token[0]:
+        case 'bx':
+            R = '1'
+            L = '0'
+            r_b = get_reg_number(token[3])
+            offset = '0'*20 + r_b
+        case 'b':
+            R = '0'
+            L = '0'
+            label_address = symbols[token[3]]
+            offset = find_branching_offset(label_address, lc)
+            
+            
 
-    machine_code = cond_bits + operation_bits
+        case "bl":
+            R = '0'
+            L = '1'
+            label_address = symbols[token[3]]
+            offset = find_branching_offset(label_address, lc)
+        case _:
+            R = 'X'
+            L = 'X'
+            offset = 'X'*24
+
+    machine_code = cond_bits + operation_bits + offset
     return machine_code
 
-
+def check_mc_validity(mc: str):
+    if len(mc) != 32:
+        raise Exception("Incorrect machine code length!")
+    
 def second_pass(token, lc, line):
     """
         Executes the second pass of the assembler. Each instruction line of the program is parsed and replaced with the instruction binary representation.
@@ -427,27 +546,34 @@ def second_pass(token, lc, line):
     instr_type = set_instr_type(mneumonic_code)
     if instr_type == Instruction_Type.RX:
         machine_code = parse_rx(token)
+        check_mc_validity(machine_code)
         # if len(token) == 10:
         #     print(line)
         # print(f"{machine_code:<32} : {line:<40} : len: {len(token)}")
     elif instr_type == Instruction_Type.RF:
         machine_code =  parse_rf(token)
+        # check_mc_validity(machine_code)
         # if len(token) == 10:
         #     print(line)
-        print(f"{machine_code:<32} : {line:<40} : len: {len(token)}")
+        # print(f"{machine_code:<32} : {line:<40} : len: {len(token)}")
     elif instr_type == Instruction_Type.D:
         machine_code =  parse_d(token)
-        # if len(token) == 10:
+        check_mc_validity(machine_code)
+        # if len(token) == 15:
         #     print(line)
-        print(f"{machine_code:<32} : {line:<40} : len: {len(token)}")
+        # print(f"{machine_code:<32} : {line:<40} : len: {len(token)}")
     elif instr_type == Instruction_Type.B:
-        machine_code =  parse_b(token)
+        machine_code =  parse_b(token, lc)
+        # check_mc_validity(machine_code)
+        # if len(token) == 15:
+        #     print(line)
+        # print(f"{machine_code:<32} : {line:<40} : len: {len(token)}")
     else:
         raise Exception("Invalid Instruction Type")
 
 
     # CHANGE THE 4TH ARGUMENT TO CHANGE THE OUTPUT FORMAT OF THE BIN
-    machine_code_f = format_machine_code(machine_code, lc, line, Formatter.DEBUG)                      # debug line
+    machine_code_f = format_machine_code(machine_code, lc, line, Formatter.PROD)                      # debug line
     # print(machine_code_f)
     return machine_code_f
 
@@ -470,7 +596,6 @@ with open("out.bin", "w") as f:
             
 
                 ###
-                # TODO: SECOND PASS
                 instr_bin = second_pass(token, lc, line.strip())
                 ###     
 
