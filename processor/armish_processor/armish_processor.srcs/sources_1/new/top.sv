@@ -26,10 +26,11 @@ module top(
     input reset             // synchronous reset
     );
     logic [15:0] pc;
-    logic [15:0] offset;
+    logic [15:0] offset_nonbranching; 
+    // Program counter: No branching
+    assign offset_nonbranching = 16'd4;
+    pc_adder no_branch_adder(.pc_next(pc_next), .pc(pc), .offset(offset_nonbranching));
     
-    assign offset = 16'd4;
-    pc_adder no_branch_adder(.pc_next(pc_next), .pc(pc), .offset(offset));
     always_ff@(posedge clk) begin
         if(reset) begin 
             pc <= 16'd0;
@@ -38,7 +39,6 @@ module top(
             pc <= pc_next;
         end
     end
-    assign sig = 1'b1;
     
 endmodule
 

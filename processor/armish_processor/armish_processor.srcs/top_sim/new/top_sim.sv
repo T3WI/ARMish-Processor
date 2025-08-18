@@ -19,14 +19,11 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-
-module top_sim(
-
-    );
+module top_sim();
+    bit clk;
+    bit reset;
     logic [15:0] out;
-    logic reset;
-    
-    reg clk;
+    logic [15:0] offset;
     
     initial begin
         clk = 1'b0;
@@ -35,6 +32,7 @@ module top_sim(
     
     top t(.pc_next(out), .clk(clk), .reset(reset));
     
+    // Test: Address with positive offset
     initial begin
         reset = 1'b1;
         #10;
