@@ -23,7 +23,6 @@ module top_sim();
     bit clk;
     bit reset;
     logic [15:0] out;
-    logic [15:0] offset;
     
     initial begin
         clk = 1'b0;

@@ -21,11 +21,14 @@
 
 
 module pc_adder(
-    output [15:0] pc_next,
-    input [15:0] pc,
-    input [15:0] offset
+    output logic [15:0] pc_next,
+    input logic [15:0] pc,
+    input logic signed[15:0] offset
     );
-    assign pc_next = pc + offset;
+    
+    logic signed [16:0] sum;
+    assign sum = $signed(pc) + offset;      // ensure that signed addition is used to prevent any unexpected addition mistakes
+    assign pc_next = sum[15:0];             // take the magnitude bits to be the address
 endmodule
 
 
