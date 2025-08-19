@@ -157,7 +157,7 @@ def format_machine_code(machine_code: str, lc, line: str, output_mode=Formatter.
         return f"{lc:>4} ({r_binary_lc}) ({r_hex_lc}):\t{r_machine_code}\t({line})\n"
     else:
         binary_lc = format(lc, '016b')
-        return f"{binary_lc} :\t{machine_code}\n"
+        return f"{machine_code}\n"
     
 def set_instr_type(mneumonic_code: str):
     """

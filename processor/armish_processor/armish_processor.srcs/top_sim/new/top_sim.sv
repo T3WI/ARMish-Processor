@@ -22,20 +22,37 @@
 module top_sim();
     bit clk;
     bit reset;
-    logic [15:0] out;
-    
+    bit done;
+    bit load_ready;
+    bit load_done;
+    bit execute_done;
+
+    // 100 MHz clock
     initial begin
         clk = 1'b0;
-        forever #5 clk = ~clk;
+        forever #10 clk = ~clk;
     end
     
-    top t(.pc_next(out), .clk(clk), .reset(reset));
+    bit[31:0]temp_mem[0:255];
+    
+    task load_from_file();
+        $readmemb("out.bin", temp_mem);
+    endtask
+    
+    top t(.done(done), .load_done(load_done), .execute_done(execute_done), .clk(clk), .reset(reset), .load_ready(load_ready));
     
     // Test: Address with positive offset
     initial begin
         reset = 1'b1;
         #10;
         reset = 1'b0;
+        #10;
+        load_from_file();
+        load_ready = 1'b1; 
+        #50;  
+        if(load_done) load_ready = 1'b0;
+
+        
     end 
     
 endmodule

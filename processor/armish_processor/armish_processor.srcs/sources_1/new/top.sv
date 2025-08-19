@@ -21,25 +21,69 @@
 
 
 module top(
-    output logic [15:0] pc_next, 
-    input clk,              // clock 
-    input reset             // synchronous reset
+    output logic done,
+    output logic load_done,
+    output logic execute_done,
+    input logic clk,              // clock 
+    input logic reset,             // synchronous reset
+    input logic load_ready
     );
+    enum logic[1:0] {IDLE=2'd0, LOAD_INSTR=2'd1, EXECUTE_PROGRAM=2'd2, FINISH=2'd3} curr_state, next_state;
+
+    // CPU signals
     logic [15:0] pc;
     logic [15:0] offset_nonbranching; 
+    logic [15:0] pc_next;
+
     // Program counter: No branching
     assign offset_nonbranching = 16'd4;
     pc_adder no_branch_adder(.pc_next(pc_next), .pc(pc), .offset(offset_nonbranching));
     
-    always_ff@(posedge clk) begin
+    always_ff@(posedge clk) begin 
         if(reset) begin 
-            pc <= 16'd0;
+            curr_state <= IDLE;
+            load_done <= 1'b0;
+            execute_done <= 1'b0;
+            done <= 1'b1;
         end
         else begin 
-            pc <= pc_next;
+            case(curr_state)
+                IDLE: begin 
+                    done <= 1'b1;
+                    if(load_ready) begin 
+                        curr_state <= LOAD_INSTR;
+                    end
+                    else begin 
+                        curr_state <= IDLE;
+                    end
+                end
+                LOAD_INSTR: begin 
+                    done <= 1'b0;
+                    if(load_done) begin 
+                        curr_state <= EXECUTE_PROGRAM;
+                    end
+                    else begin 
+                        curr_state <= LOAD_INSTR;
+                        load_done <= 1'b1;          // FOR TESTING FSM
+                    end
+                end
+                EXECUTE_PROGRAM: begin 
+                    done <= 1'b0;
+                    if(execute_done) begin 
+                        curr_state <= IDLE;
+                    end 
+                    else begin 
+                        curr_state <= EXECUTE_PROGRAM;
+                        execute_done <= 1'b1;       // FOR TESTING FSM
+                    end
+                end
+                default: begin
+                    done <= 1'b1;
+                    curr_state <= IDLE; 
+                end
+            endcase
         end
     end
-    
 endmodule
 
 
