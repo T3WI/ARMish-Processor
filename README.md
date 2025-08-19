@@ -7,7 +7,7 @@ The assembler was implemented in Python, and the RTL model was implemented using
 - [x] ISA Design
 - [x] Assembler
 - [ ] Instruction Memory
-- [ ] Program Counter Adder
+- [x] Program Counter Adder
 - [ ] Register FIle
 - [ ] ALU
 - [ ] ALU Control
