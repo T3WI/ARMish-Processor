@@ -22,32 +22,38 @@
 
 module top(
     output logic done,
-    output logic load_done,
     output logic execute_done,
+    input logic [9:0] instrmem_w_address,
+    input logic [31:0] instrmem_w_instruction,
     input logic clk,              // clock 
     input logic reset,             // synchronous reset
-    input logic load_ready
+    input logic load_ready,
+    input logic load_done
     );
     enum logic[1:0] {IDLE=2'd0, LOAD_INSTR=2'd1, EXECUTE_PROGRAM=2'd2, FINISH=2'd3} curr_state, next_state;
 
-    // FSM Control
-    logic w_e;
 
-    // CPU signals
+    // Program Counter Signals
     logic [15:0] pc;
     logic [15:0] offset_nonbranching; 
     logic [15:0] pc_next;
-
-    // Program counter: No branching
     assign offset_nonbranching = 16'd4;
+    
+    // Instruction Memory Signals
+    logic [31:0] instruction;
+    logic instrmem_we;
+    
     pc_adder no_branch_adder(.pc_next(pc_next), .pc(pc), .offset(offset_nonbranching));
+    instr_mem im(.instruction(instruction), .r_address(pc), .w_instruction(instrmem_w_instruction), .w_address(instrmem_w_address), .w_e(instrmem_we));
+    
     
     always_ff@(posedge clk) begin 
         if(reset) begin 
             curr_state <= IDLE;
-            load_done <= 1'b0;
             execute_done <= 1'b0;
             done <= 1'b1;
+
+            instrmem_we <= 1'b0;
         end
         else begin 
             case(curr_state)
@@ -55,7 +61,7 @@ module top(
                     done <= 1'b1;
                     if(load_ready) begin 
                         curr_state <= LOAD_INSTR;
-                        w_e <= 1'b1;
+                        instrmem_we <= 1'b1;
                     end
                     else begin 
                         curr_state <= IDLE;
@@ -65,11 +71,11 @@ module top(
                     done <= 1'b0;
                     if(load_done) begin                 // testbench should raise load_done somehow 
                         curr_state <= EXECUTE_PROGRAM;
-                        w_e <= 1'b0;
+                        instrmem_we <= 1'b0;
+                        pc <= 16'b0;
                     end
                     else begin 
                         curr_state <= LOAD_INSTR;
-                        load_done <= 1'b1;          // FOR TESTING FSM
                     end
                 end
                 EXECUTE_PROGRAM: begin 
@@ -78,8 +84,11 @@ module top(
                         curr_state <= IDLE;
                     end 
                     else begin 
+                        if(instruction[31:28] == 4'd0) begin 
+                            execute_done <= 1'b1;
+                        end
                         curr_state <= EXECUTE_PROGRAM;
-                        execute_done <= 1'b1;       // FOR TESTING FSM
+                        pc <= pc_next;
                     end
                 end
                 default: begin

@@ -34,19 +34,41 @@ module top_sim();
     end
     
     bit[31:0]temp_mem[0:255];
+    logic [31:0] w_instruction;
+    logic [9:0] w_address;
     
     task load_from_file();
+        load_done = 1'b0;
         $readmemb("out.bin", temp_mem);
     endtask
 
-    // TODO: Write instruction to instruction memory serially until all of temp_mem is read 
+    integer count;
+    task count_instructions(output integer count);
+        integer file;
+        string token;
+        count = 0;
+
+        file = $fopen("out.bin", "r");
+        if (file == 0) $fatal("Failed to open file");
+
+        // Read tokens one by one, ignoring whitespace/newlines
+        while ($fscanf(file, "%s", token) == 1) begin
+            count++;
+        end
+
+        $fclose(file);
+        $display("Lines in file: %0d", count);
+    endtask
+
     task load_instruction_mem();
-    begin
-        #10; 
-    end
+        for(int i = 0; i < count; i++) begin
+            w_instruction = temp_mem[i];
+            w_address = i;
+            #10;
+        end 
     endtask 
     
-    top t(.done(done), .load_done(load_done), .execute_done(execute_done), .clk(clk), .reset(reset), .load_ready(load_ready));
+    top t(.done(done), .execute_done(execute_done), .instrmem_w_address(w_address), .instrmem_w_instruction(w_instruction), .clk(clk), .reset(reset), .load_ready(load_ready), .load_done(load_done));
     
     // Test: Address with positive offset
     initial begin
@@ -55,12 +77,14 @@ module top_sim();
         reset = 1'b0;
         #10;
         load_from_file();
+        #10;
+        count_instructions(count);
+        #10;
         load_ready = 1'b1; 
-        #50;  
+        #10;  
         load_instruction_mem();
+        load_done = 1'b1;
         if(load_done) load_ready = 1'b0;
-
-        
     end 
     
 endmodule

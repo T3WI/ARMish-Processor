@@ -9,3 +9,5 @@ addx.s-al r4, r1, r2
 addx.s-al r4, r4, #108
 
 addx.s-al r5, r4, r2 
+
+addx.s-halt r4, r3, r2

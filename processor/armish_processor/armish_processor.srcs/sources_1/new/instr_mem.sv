@@ -39,7 +39,7 @@ module instr_mem(
         end
         // read instruction memory to output the instruction at pc
         else begin 
-            instruction = instruction_memory[r_address];
+            instruction = instruction_memory[r_address >> 2];
         end
     end
     
