@@ -30,6 +30,9 @@ module top(
     );
     enum logic[1:0] {IDLE=2'd0, LOAD_INSTR=2'd1, EXECUTE_PROGRAM=2'd2, FINISH=2'd3} curr_state, next_state;
 
+    // FSM Control
+    logic w_e;
+
     // CPU signals
     logic [15:0] pc;
     logic [15:0] offset_nonbranching; 
@@ -52,6 +55,7 @@ module top(
                     done <= 1'b1;
                     if(load_ready) begin 
                         curr_state <= LOAD_INSTR;
+                        w_e <= 1'b1;
                     end
                     else begin 
                         curr_state <= IDLE;
@@ -59,8 +63,9 @@ module top(
                 end
                 LOAD_INSTR: begin 
                     done <= 1'b0;
-                    if(load_done) begin 
+                    if(load_done) begin                 // testbench should raise load_done somehow 
                         curr_state <= EXECUTE_PROGRAM;
+                        w_e <= 1'b0;
                     end
                     else begin 
                         curr_state <= LOAD_INSTR;

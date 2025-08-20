@@ -22,8 +22,25 @@
 
 module instr_mem(
     output logic [31:0] instruction,
-    input logic [31:0] load_instr,
-    input logic [15:0] pc
+    input logic [15:0] r_address,
+
+    input logic [31:0] w_instruction,
+    input logic [9:0] w_address,
+    input logic w_e 
     );
-    byte [3:0] instruction_memory[1023:0];
+
+    bit [31:0] instruction_memory[0:1023];
+    
+    always_comb begin 
+        // load memory serially into instruction memory
+        if(w_e) begin 
+            instruction_memory[w_address] = w_instruction;
+            instruction = 32'b0;
+        end
+        // read instruction memory to output the instruction at pc
+        else begin 
+            instruction = instruction_memory[r_address];
+        end
+    end
+    
 endmodule

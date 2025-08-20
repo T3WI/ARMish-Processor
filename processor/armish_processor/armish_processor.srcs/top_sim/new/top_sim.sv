@@ -38,6 +38,13 @@ module top_sim();
     task load_from_file();
         $readmemb("out.bin", temp_mem);
     endtask
+
+    // TODO: Write instruction to instruction memory serially until all of temp_mem is read 
+    task load_instruction_mem();
+    begin
+        #10; 
+    end
+    endtask 
     
     top t(.done(done), .load_done(load_done), .execute_done(execute_done), .clk(clk), .reset(reset), .load_ready(load_ready));
     
@@ -50,6 +57,7 @@ module top_sim();
         load_from_file();
         load_ready = 1'b1; 
         #50;  
+        load_instruction_mem();
         if(load_done) load_ready = 1'b0;
 
         
