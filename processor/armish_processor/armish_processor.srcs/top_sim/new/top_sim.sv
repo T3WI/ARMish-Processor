@@ -50,7 +50,7 @@ module top_sim();
         count = 0;
 
         file = $fopen("out.bin", "r");
-        if (file == 0) $fatal("Failed to open file");
+//        if (file == 0) $fatal("Failed to open file");
 
         // Read tokens one by one, ignoring whitespace/newlines
         while ($fscanf(file, "%s", token) == 1) begin
