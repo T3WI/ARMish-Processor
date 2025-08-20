@@ -25,6 +25,7 @@ module top(
     output logic execute_done,
     input logic [9:0] instrmem_w_address,
     input logic [31:0] instrmem_w_instruction,
+    input logic instrmem_we,
     input logic clk,              // clock 
     input logic reset,             // synchronous reset
     input logic load_ready,
@@ -41,10 +42,9 @@ module top(
     
     // Instruction Memory Signals
     logic [31:0] instruction;
-    logic instrmem_we;
     
     pc_adder no_branch_adder(.pc_next(pc_next), .pc(pc), .offset(offset_nonbranching));
-    instr_mem im(.instruction(instruction), .r_address(pc), .w_instruction(instrmem_w_instruction), .w_address(instrmem_w_address), .w_e(instrmem_we));
+    instr_mem im(.instruction(instruction), .r_address(pc), .w_instruction(instrmem_w_instruction), .w_address(instrmem_w_address), .w_e(instrmem_we), .clk(clk));
     
     
     always_ff@(posedge clk) begin 
@@ -52,8 +52,6 @@ module top(
             curr_state <= IDLE;
             execute_done <= 1'b0;
             done <= 1'b1;
-
-            instrmem_we <= 1'b0;
         end
         else begin 
             case(curr_state)
@@ -61,7 +59,6 @@ module top(
                     done <= 1'b1;
                     if(load_ready) begin 
                         curr_state <= LOAD_INSTR;
-                        instrmem_we <= 1'b1;
                     end
                     else begin 
                         curr_state <= IDLE;
@@ -71,11 +68,10 @@ module top(
                     done <= 1'b0;
                     if(load_done) begin                 // testbench should raise load_done somehow 
                         curr_state <= EXECUTE_PROGRAM;
-                        instrmem_we <= 1'b0;
                         pc <= 16'b0;
                     end
                     else begin 
-                        curr_state <= LOAD_INSTR;
+                        curr_state <= LOAD_INSTR;   
                     end
                 end
                 EXECUTE_PROGRAM: begin 

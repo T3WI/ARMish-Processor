@@ -27,7 +27,7 @@ module top_sim();
     bit load_done;
     bit execute_done;
 
-    // 100 MHz clock
+    // 50 MHz clock
     initial begin
         clk = 1'b0;
         forever #10 clk = ~clk;
@@ -36,6 +36,7 @@ module top_sim();
     bit[31:0]temp_mem[0:255];
     logic [31:0] w_instruction;
     logic [9:0] w_address;
+    logic instrmem_we;
     
     task load_from_file();
         load_done = 1'b0;
@@ -64,11 +65,11 @@ module top_sim();
         for(int i = 0; i < count; i++) begin
             w_instruction = temp_mem[i];
             w_address = i;
-            #10;
+            #20;
         end 
     endtask 
     
-    top t(.done(done), .execute_done(execute_done), .instrmem_w_address(w_address), .instrmem_w_instruction(w_instruction), .clk(clk), .reset(reset), .load_ready(load_ready), .load_done(load_done));
+    top t(.done(done), .execute_done(execute_done), .instrmem_w_address(w_address), .instrmem_w_instruction(w_instruction), .clk(clk), .reset(reset), .load_ready(load_ready), .load_done(load_done), .instrmem_we(instrmem_we));
     
     // Test: Address with positive offset
     initial begin
@@ -82,9 +83,15 @@ module top_sim();
         #10;
         load_ready = 1'b1; 
         #10;  
+        instrmem_we = 1'b1;
+        #10;
         load_instruction_mem();
+        instrmem_we = 1'b0;
+        #10;
         load_done = 1'b1;
         if(load_done) load_ready = 1'b0;
+        
+        
     end 
     
 endmodule
