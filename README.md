@@ -8,12 +8,10 @@ The assembler was implemented in Python, and the RTL model was implemented using
 - [x] Assembler
 - [x] Instruction Memory
 - [x] Program Counter Adder
-- [ ] Register FIle
-- [ ] ALU
-- [ ] ALU Control
+- [x] Register FIle
+- [ ] ALU + ALU Control
+- [ ] FPU + FPU Control
 - [ ] Pipelining and Hazard Control
-- [ ] FPU
-- [ ] FPU Control
 - [ ] Other Features
 
 # Verification
