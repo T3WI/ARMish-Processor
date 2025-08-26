@@ -280,8 +280,8 @@ def parse_rx(token):
             if(token[0] == 'cmpx'):
                 S = '1'
                 r_d = get_reg_number('r0')
-                r_n = get_reg_number(token[5])
-                r_m = get_reg_number(token[3])
+                r_n = get_reg_number(token[3])
+                r_m = get_reg_number(token[5])
                 op2 = ('0'*8) + r_m
             else:
                 r_d = get_reg_number(token[3]) 

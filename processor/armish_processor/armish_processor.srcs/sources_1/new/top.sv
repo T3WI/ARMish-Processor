@@ -42,9 +42,13 @@ module top(
     
     // Instruction Memory Signals
     logic [31:0] instruction;
+
+    // Register File Signals
+    logic [15:0] r_data1, r_data2;
     
     pc_adder no_branch_adder(.pc_next(pc_next), .pc(pc), .offset(offset_nonbranching));
     instr_mem im(.instruction(instruction), .r_address(pc), .w_instruction(instrmem_w_instruction), .w_address(instrmem_w_address), .w_e(instrmem_we), .clk(clk));
+    
     
     
     always_ff@(posedge clk) begin 
