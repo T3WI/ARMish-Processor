@@ -213,6 +213,9 @@ def get_immediate(imm: str):
     imm8 = bin_imm.zfill(8)
     bin_imm = bin_imm.zfill(16)        # Convert to 32b
 
+    if(len(imm8) != 8):
+        raise Exception("Immediate not encodable")
+
     # find rot
     idx_rot = 0
     rot = ''
@@ -231,6 +234,9 @@ def get_immediate(imm: str):
     if enc_success == 0:
         raise Exception("Immediate not encodable")
     op2 = rot + imm8
+    if(len(op2) != 12):
+        print(f"Immediate Inputted: {imm}\n op2 Encoded: {op2}\n rot: {rot}\n imm8: {imm8}")
+        raise Exception("Immediate encoding error!")
     return op2
 
 def convert_string_shtype_to_enum(str_shtype: str) -> Shtype:
@@ -527,8 +533,9 @@ def parse_b(token, lc):
     machine_code = cond_bits + operation_bits + offset
     return machine_code
 
-def check_mc_validity(mc: str):
+def check_mc_validity(token, line, mc: str):
     if len(mc) != 32:
+        print(f"Line: {line}\n Tokenized: {token}\n Token Length: {len(token)}\n Machine Code: {mc}\n Length: {len(mc)}")
         raise Exception("Incorrect machine code length!")
     
 def second_pass(token, lc, line):
@@ -547,7 +554,7 @@ def second_pass(token, lc, line):
     instr_type = set_instr_type(mneumonic_code)
     if instr_type == Instruction_Type.RX:
         machine_code = parse_rx(token)
-        check_mc_validity(machine_code)
+        check_mc_validity(token, line, machine_code)
         # if len(token) == 10:
         #     print(line)
         # print(f"{machine_code:<32} : {line:<40} : len: {len(token)}")
