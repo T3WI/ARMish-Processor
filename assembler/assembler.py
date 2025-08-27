@@ -474,7 +474,7 @@ def parse_d(token):
         case _:
             raise Exception("Invalid instruction. Check for syntax errors.")
 
-    machine_code = cond_bits + operation_bits + U + I + r_n + r_d + offset
+    machine_code = cond_bits + operation_bits + I + U + r_n + r_d + offset
     return machine_code
 
 def conv_to_2s(value, bits):
