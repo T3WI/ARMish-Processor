@@ -305,7 +305,7 @@ def parse_rx(token):
             r_d = get_reg_number(token[3])
             r_n = get_reg_number(token[5])
             shtype = Shtype.ROR.value
-            shamt = '0'*5
+            shamt = '0'*4 + '0'
             r_shift = '0'
             r_m = get_reg_number(token[7])
             op2 = shtype + shamt + r_shift + r_m
@@ -322,7 +322,7 @@ def parse_rx(token):
             r_n = get_reg_number(token[7])
             r_m = get_reg_number(token[9])
             shtype = Shtype.ROR.value 
-            shamt = '0'*5
+            shamt = '0'*4 + '0'
             r_shift = '0'
             op2 = shtype + shamt + r_shift + r_m 
         case 11:
@@ -349,7 +349,7 @@ def parse_rx(token):
             r_d = get_reg_number(token[3])
             r_n = get_reg_number(token[5])
             shtype = convert_string_shtype_to_enum(token[9]).value
-            shamt = format(int(token[11]), "05b")
+            shamt = format(int(token[11]), "04b") + '0'
             r_shift = '0'                  
             r_m = get_reg_number(token[7])
             op2 = shtype + shamt + r_shift + r_m
@@ -369,7 +369,7 @@ def parse_rx(token):
             r_d = get_reg_number(token[5])
             r_n = get_reg_number(token[7])
             shtype = convert_string_shtype_to_enum(token[11]).value
-            shamt = format(int(token[13]), "05b")
+            shamt = format(int(token[13]), "04b") + '0'
             r_shift = '0'
             r_m = get_reg_number(token[9])
             op2 = shtype + shamt + r_shift + r_m
@@ -424,7 +424,7 @@ def parse_d(token):
             r_n = get_reg_number(token[6])
             r_d = get_reg_number(token[3])
             shtype = Shtype.ROR.value
-            shamt = '0'*5
+            shamt = '0'*4 + '0'
             r_shift = '0'
             r_m = get_reg_number(token[8])
             offset = shtype + shamt + r_shift + r_m
@@ -433,7 +433,7 @@ def parse_d(token):
                 U = '0'
                 I = '0'
                 shtype = Shtype.ROR.value 
-                shamt = '0'*5
+                shamt = '0'*4 + '0'
                 r_shift = '0'
                 r_m = get_reg_number(token[9])
                 offset = shtype + shamt + r_shift + r_m
@@ -467,7 +467,7 @@ def parse_d(token):
             r_d = get_reg_number(token[3])
             r_n = get_reg_number(token[6])
             shtype = convert_string_shtype_to_enum(token[10]).value
-            shamt = format(int(token[12]), "05b")
+            shamt = format(int(token[12]), "04b") + '0'
             r_shift = '0'
             r_m = get_reg_number(token[8])
             offset = shtype + shamt + r_shift + r_m
@@ -555,8 +555,8 @@ def second_pass(token, lc, line):
     if instr_type == Instruction_Type.RX:
         machine_code = parse_rx(token)
         check_mc_validity(token, line, machine_code)
-        if len(token) == 8:
-            print(line)
+        # if len(token) == 8:
+        #     print(line)
         # print(f"{machine_code:<32} : {line:<40} : len: {len(token)}")
     elif instr_type == Instruction_Type.RF:
         machine_code =  parse_rf(token)
