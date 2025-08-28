@@ -555,8 +555,8 @@ def second_pass(token, lc, line):
     if instr_type == Instruction_Type.RX:
         machine_code = parse_rx(token)
         check_mc_validity(token, line, machine_code)
-        # if len(token) == 10:
-        #     print(line)
+        if len(token) == 8:
+            print(line)
         # print(f"{machine_code:<32} : {line:<40} : len: {len(token)}")
     elif instr_type == Instruction_Type.RF:
         machine_code =  parse_rf(token)
@@ -566,12 +566,13 @@ def second_pass(token, lc, line):
         # print(f"{machine_code:<32} : {line:<40} : len: {len(token)}")
     elif instr_type == Instruction_Type.D:
         machine_code =  parse_d(token)
-        check_mc_validity(machine_code)
+        check_mc_validity(token, line, machine_code)
         # if len(token) == 15:
         #     print(line)
         # print(f"{machine_code:<32} : {line:<40} : len: {len(token)}")
     elif instr_type == Instruction_Type.B:
         machine_code =  parse_b(token, lc)
+        check_mc_validity(token, line, machine_code)
         # check_mc_validity(machine_code)
         # if len(token) == 15:
         #     print(line)
