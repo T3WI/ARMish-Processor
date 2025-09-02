@@ -43,7 +43,8 @@ class alu_sb;
             input logic [3:0] nzcv, 
             input logic [15:0] data1, 
             input logic [15:0] data2, 
-            input logic [3:0] opcode);
+            input logic [3:0] opcode,
+            input logic Cin=1'b0);
             logic [3:0] result = 4'd0;
         
         case(opcode)
@@ -58,6 +59,22 @@ class alu_sb;
             SUBX: 
             begin 
                 logic [16:0] diff = data1 - data2;
+                result[3] = diff[15];
+                result[2] = (diff[15:0] == 0);
+                result[1] = (data1 >= data2);
+                result[0] = (data1[15] ^ data2[15]) & (diff[15] ^ data1[15]);
+            end
+            ADCX: 
+            begin
+                logic [16:0] sum = data1 + data2 + Cin; 
+                result[3] = sum[15];
+                result[2] = (sum[15:0] == 0);
+                result[1] = sum[16];
+                result[0] = ~(data1[15] ^ data2[15]) & (sum[15] ^ data1[15]);
+            end
+            SBCX: 
+            begin 
+                logic [16:0] diff = data1 - data2 - (1 - Cin);
                 result[3] = diff[15];
                 result[2] = (diff[15:0] == 0);
                 result[1] = (data1 >= data2);
@@ -78,8 +95,7 @@ class alu_sb;
             input logic signed [15:0] dut_data1, 
             input logic signed [15:0] dut_data2, 
             input logic signed[15:0] exp_data1, 
-            input logic signed[15:0] exp_data2, 
-            input int i);
+            input logic signed[15:0] exp_data2);
 
         shortint sum = exp_data1 + exp_data2;
         if(sum[15:0] == dut_data1 && dut_data2 == 0) begin 
@@ -163,6 +179,39 @@ class alu_sb;
             $display("[FAIL] Expected: %0d | Actual: %0d", exp_result, dut_data1);
         end
     endfunction
+
+    function automatic check_adcx(
+        input logic signed [15:0] dut_data1,
+        input logic signed [15:0] dut_data2,
+        input logic signed [15:0] exp_data1,
+        input logic signed [15:0] exp_data2,
+        input logic Cin
+    );
+        shortint sum = exp_data1 + exp_data2 + Cin;
+        if(sum[15:0] == dut_data1 && dut_data2 == 0) begin 
+            $display("[PASS] Expected: %4d", sum);
+        end
+        else begin 
+            $display("[FAIL] Expected: %4d | Actual: %4d", sum, dut_data1);
+        end
+
+    endfunction 
+
+    function automatic check_sbcx(
+        input logic signed [15:0] dut_data1,
+        input logic signed [15:0] dut_data2,
+        input logic signed [15:0] exp_data1,
+        input logic signed [15:0] exp_data2,
+        input logic Cin
+    );
+        shortint diff = exp_data1 - exp_data2 - (1 - Cin);
+        if(diff[15:0] == dut_data1 && dut_data2 == 0) begin 
+            $display("[PASS] Expected: %4d", diff);
+        end
+        else begin 
+            $display("[FAIL] Expected: %4d | Actual: %4d", diff, dut_data1);
+        end
+    endfunction
 endclass
 
 import alu_pkg::*;
@@ -228,7 +277,7 @@ module alu_sim();
             rn = data1[i];
             rm = data2[i]; 
             @(posedge clk);
-            sb.check_addx(w_data1, w_data2, data1[i], data2[i], i);
+            sb.check_addx(w_data1, w_data2, data1[i], data2[i]);
             sb.check_nzcv(nzcv, data1[i], data2[i], opcode);
         end
         @(posedge clk);
@@ -298,6 +347,39 @@ module alu_sim();
         test_footer();
     endtask 
 
+    task run_adcx_sbcx_test(
+        input alu_sb sb, 
+        input logic [15:0] data1[0:15], 
+        input logic [15:0] data2[0:15]);
+        test_header();
+        
+        @(posedge clk);
+        opcode <= ADCX;
+        Cin <= 1'b1;
+        s <= 1'b1;
+        @(posedge clk);
+        for(int i = 0; i < 16; i++) begin
+            rn = data1[i];
+            rm = data2[i]; 
+            @(posedge clk);
+            sb.check_adcx(w_data1, w_data2, data1[i], data2[i], Cin);
+            sb.check_nzcv(nzcv, data1[i], data2[i], opcode, Cin);
+        end
+        @(posedge clk);
+        opcode <= SBCX;
+        @(posedge clk);
+        for(int i = 0; i < 16; i++) begin
+            rn = data1[i];
+            rm = data2[i]; 
+            @(posedge clk);
+            sb.check_sbcx(w_data1, w_data2, data1[i], data2[i], Cin);
+            sb.check_nzcv(nzcv, data1[i], data2[i], opcode, Cin);
+        end
+        @(posedge clk);
+
+        test_footer();
+    endtask
+
     
     initial begin
         sb = new();
@@ -328,6 +410,21 @@ module alu_sim();
         @(posedge clk);
         run_absx_test(sb, z_data1);
         @(posedge clk);
+        run_adcx_sbcx_test(sb, data_arith_1, data_arith_2);
+        @(posedge clk);
+        run_adcx_sbcx_test(sb, c_data1, c_data2);
+        @(posedge clk);
+        run_adcx_sbcx_test(sb, v_data1, v_data2);
+        @(posedge clk);
+        run_adcx_sbcx_test(sb, v_data3, v_data4);
+        @(posedge clk);
+        run_adcx_sbcx_test(sb, v_data1, v_data4);
+        @(posedge clk);
+        run_adcx_sbcx_test(sb, z_data1, z_data2);
+        @(posedge clk);
+        run_adcx_sbcx_test(sb, n_data1, n_data2);
+        @(posedge clk);
         $finish; 
+
     end
 endmodule

@@ -41,8 +41,8 @@ module alu(
         return rn + rm + Cin;
     endfunction
 
-    function logic [16:0] subx(input logic signed [15:0] rn, input logic signed [15:0] rm);
-        return addx(rn, ~rm, 1);
+    function logic [16:0] subx(input logic signed [15:0] rn, input logic signed [15:0] rm, input logic Cin);
+        return addx(rn, ~rm, Cin);
     endfunction
 
     function logic [31:0] mulx(input logic signed [15:0] rn, input logic signed [15:0] rm);
@@ -98,7 +98,7 @@ module alu(
                 end
                 SUBX:
                 begin
-                    temp = subx(rn, rm);
+                    temp = subx(rn, rm, 1);
                     w_data1 = temp[15:0];
                     w_data2 = 16'd0;
                     if(s) begin 
@@ -123,7 +123,31 @@ module alu(
                 ABSX:
                 begin 
                     w_data1 = absx(rn);
-                    w_data2 = 16'b0;
+                    w_data2 = 16'd0;
+                end
+                ADCX: 
+                begin 
+                    temp = addx(rn, rm, Cin);
+                    w_data1 = temp[15:0];
+                    w_data2 = 16'd0;
+                    if(s) begin 
+                        nzcv[3] = temp[15];
+                        nzcv[2] = (w_data1 == 0);
+                        nzcv[1] = temp[16];
+                        nzcv[0] = (temp[15] ^ rn[15]) & (~(rn[15] ^ rm[15]));
+                    end
+                end
+                SBCX: 
+                begin 
+                    temp = subx(rn, rm, Cin);
+                    w_data1 = temp[15:0];
+                    w_data2 = 16'd0;
+                    if(s) begin 
+                        nzcv[3] = temp[15];
+                        nzcv[2] = (w_data1 == 0);
+                        nzcv[1] = temp[16];
+                        nzcv[0] = (rn[15] ^ rm[15]) & (temp[15] ^ rn[15]); 
+                    end
                 end
                 default:
                 begin
