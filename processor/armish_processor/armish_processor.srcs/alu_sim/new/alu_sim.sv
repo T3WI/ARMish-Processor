@@ -80,6 +80,14 @@ class alu_sb;
                 result[1] = (data1 >= data2);
                 result[0] = (data1[15] ^ data2[15]) & (diff[15] ^ data1[15]);
             end
+            CMPX:
+            begin 
+                logic [16:0] diff = data1 - data2;
+                result[3] = diff[15];
+                result[2] = (diff[15:0] == 0);
+                result[1] = (data1 >= data2);
+                result[0] = (data1[15] ^ data2[15]) & (diff[15] ^ data1[15]);
+            end
             default: 
                 result = 4'd0;
         endcase
@@ -212,6 +220,61 @@ class alu_sb;
             $display("[FAIL] Expected: %4d | Actual: %4d", diff, dut_data1);
         end
     endfunction
+
+    function automatic check_notx(
+        input logic[15:0] dut_data1,
+        input logic[15:0] exp_data1
+    );
+        logic[15:0] exp = ~exp_data1;
+        if(dut_data1 == exp) begin
+            $display("[PASS] Expected: %16b", exp); 
+        end
+        else begin
+            $display("[FAIL] Expected: %16b | Actual: %16b", exp, dut_data1); 
+        end
+    endfunction 
+
+    function automatic check_andx(
+        input logic[15:0] dut_data1, 
+        input logic[15:0] exp_data1,
+        input logic[15:0] exp_data2
+    );
+        logic[15:0] exp = exp_data1 & exp_data2;
+        if(dut_data1 == exp) begin 
+            $display("[PASS] Expected: %16b", exp);
+        end
+        else begin 
+            $display("[FAIL] Expected: %16b | Actual: %16b", exp, dut_data1);
+        end
+    endfunction 
+
+    function automatic check_orrx(
+        input logic[15:0] dut_data1, 
+        input logic[15:0] exp_data1,
+        input logic[15:0] exp_data2
+    );
+        logic[15:0] exp = exp_data1 | exp_data2;
+        if(dut_data1 == exp) begin 
+            $display("[PASS] Expected: %16b", exp);
+        end
+        else begin 
+            $display("[FAIL] Expected: %16b | Actual: %16b", exp, dut_data1);
+        end
+    endfunction 
+
+    function automatic check_xorx(
+        input logic[15:0] dut_data1, 
+        input logic[15:0] exp_data1,
+        input logic[15:0] exp_data2
+    );
+        logic[15:0] exp = exp_data1 ^ exp_data2;
+        if(dut_data1 == exp) begin 
+            $display("[PASS] Expected: %16b", exp);
+        end
+        else begin 
+            $display("[FAIL] Expected: %16b | Actual: %16b", exp, dut_data1);
+        end
+    endfunction 
 endclass
 
 import alu_pkg::*;
@@ -380,6 +443,86 @@ module alu_sim();
         test_footer();
     endtask
 
+    task run_cmpx_test(
+        input alu_sb sb,
+        input logic[15:0] data1[0:15],
+        input logic[15:0] data2[0:15]
+    );
+        test_header();
+        @(posedge clk);
+        opcode <= CMPX; 
+        Cin <= 1'b0; 
+        s <= 1'b1;
+        @(posedge clk);
+        for(int i = 0; i < 16; i++) begin 
+            for(int j = 0; j < 16; j++) begin 
+                rn = data1[i];
+                rm = data2[j];
+                @(posedge clk);
+                sb.check_nzcv(nzcv, data1[i], data2[j], opcode);
+            end
+        end
+        @(posedge clk);
+        test_footer();
+
+    endtask 
+
+    task run_notx_test(
+        input alu_sb sb,
+        input logic [15:0] data1[0:15]
+    );
+        test_header();
+        @(posedge clk);
+        opcode <= NOTX;
+        Cin <= 1'b0;
+        s <= 1'b0;
+        @(posedge clk);
+        for(int i = 0; i < 16; i++) begin 
+            rn = data1[i];
+            @(posedge clk);
+            sb.check_notx(w_data1, data1[i]);
+        end
+        @(posedge clk);
+        test_footer();
+    endtask 
+
+    task run_andx_orrx_xorx_test(
+        input alu_sb sb,
+        input logic [15:0] data1[0:15],
+        input logic [15:0] data2[0:15]
+    );
+        test_header();
+        @(posedge clk);
+        opcode <= ANDX;
+        Cin <= 1'b0;
+        s <= 1'b0;
+        @(posedge clk);
+        for(int i = 0; i < 16; i++) begin 
+            rn = data1[i];
+            rm = data2[i];
+            @(posedge clk);
+            sb.check_andx(w_data1, data1[i], data2[i]);
+        end
+        @(posedge clk);
+        opcode <= ORRX;
+        for(int i = 0; i < 16; i++) begin 
+            rn = data1[i];
+            rm = data2[i];
+            @(posedge clk);
+            sb.check_orrx(w_data1, data1[i], data2[i]);
+        end
+        @(posedge clk);
+        opcode <= XORX;
+        for(int i = 0; i < 16; i++) begin 
+            rn = data1[i];
+            rm = data2[i];
+            @(posedge clk);
+            sb.check_xorx(w_data1, data1[i], data2[i]);
+        end
+        @(posedge clk);
+        test_footer();
+    endtask 
+
     
     initial begin
         sb = new();
@@ -424,6 +567,11 @@ module alu_sim();
         @(posedge clk);
         run_adcx_sbcx_test(sb, n_data1, n_data2);
         @(posedge clk);
+        run_cmpx_test(sb, z_data1, z_data2);
+        @(posedge clk);
+        run_notx_test(sb, n_data1);
+        @(posedge clk);
+        run_andx_orrx_xorx_test(sb, n_data1, n_data2);
         $finish; 
 
     end

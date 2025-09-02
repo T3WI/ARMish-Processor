@@ -68,6 +68,22 @@ module alu(
     function logic [15:0] absx(input logic signed [15:0] rn);
         return (rn[15]) ? -rn : rn;
     endfunction 
+
+    function logic [15:0] notx(input logic [15:0] rn);
+        return ~rn;
+    endfunction
+
+    function logic [15:0] andx(input logic [15:0] rn, input logic [15:0] rm);
+        return rn & rm;
+    endfunction
+
+    function logic [15:0] orrx(input logic [15:0] rn, input logic [15:0] rm);
+        return rn | rm;
+    endfunction
+
+    function logic [15:0] xorx(input logic [15:0] rn, input logic [15:0] rm);
+        return rn ^ rm;
+    endfunction 
     
 
     logic [16:0] temp;
@@ -148,6 +164,38 @@ module alu(
                         nzcv[1] = temp[16];
                         nzcv[0] = (rn[15] ^ rm[15]) & (temp[15] ^ rn[15]); 
                     end
+                end
+                CMPX: 
+                begin
+                    temp = subx(rn, rm, 1);
+                    w_data1 = 16'b0;
+                    w_data2 = 16'd0;
+                    if(s) begin 
+                        nzcv[3] = temp[15];
+                        nzcv[2] = (temp[15:0] == 0);
+                        nzcv[1] = temp[16];
+                        nzcv[0] = (rn[15] ^ rm[15]) & (temp[15] ^ rn[15]); 
+                    end
+                end
+                NOTX: 
+                begin
+                    w_data1 = notx(rn);
+                    w_data2 = 16'b0; 
+                end
+                ANDX: 
+                begin
+                    w_data1 = andx(rn, rm);
+                    w_data2 = 16'b0; 
+                end
+                ORRX: 
+                begin
+                    w_data1 = orrx(rn, rm);
+                    w_data2 = 16'b0; 
+                end
+                XORX: 
+                begin
+                    w_data1 = xorx(rn, rm);
+                    w_data2 = 16'b0; 
                 end
                 default:
                 begin
