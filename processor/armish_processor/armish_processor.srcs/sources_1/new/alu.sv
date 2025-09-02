@@ -37,17 +37,37 @@ module alu(
         
 
 
-    function logic [16:0] addx(input logic [15:0] rn, input logic [15:0] rm, input logic Cin);
+    function logic [16:0] addx(input logic signed [15:0] rn, input logic signed [15:0] rm, input logic Cin);
         return rn + rm + Cin;
     endfunction
 
-    function logic [16:0] subx(input logic [15:0] rn, input logic [15:0] rm);
+    function logic [16:0] subx(input logic signed [15:0] rn, input logic signed [15:0] rm);
         return addx(rn, ~rm, 1);
     endfunction
 
+    function logic [31:0] mulx(input logic signed [15:0] rn, input logic signed [15:0] rm);
+        return rn * rm;
+    endfunction
+
+    function logic [31:0] divx(input logic signed [15:0] rn, input logic signed [15:0] rm);
+        logic signed [15:0] quotient;
+        logic signed [15:0] remainder;
+        logic [31:0] result;
+        if(rm == 0) begin 
+            return 32'hFFFF_FFFF;
+        end 
+        else begin 
+            quotient = rn / rm;
+            remainder = rn % rm;
+            result[31:16] = quotient;
+            result[15:0] = remainder;
+            return result;
+        end
+    endfunction
     
 
     logic [16:0] temp;
+    logic [31:0] big_temp;
     always_comb begin 
         w_data1 = 16'b0;
         w_data2 = 16'b0;
@@ -84,6 +104,18 @@ module alu(
                         nzcv[0] = (rn[15] ^ rm[15]) & (temp[15] ^ rn[15]); 
                     end
                 end 
+                MULX:
+                begin
+                    big_temp = mulx(rn, rm); 
+                    w_data1 = big_temp[31:16];
+                    w_data2 = big_temp[15:0];
+                end
+                DIVX: 
+                begin
+                    big_temp = divx(rn, rm);
+                    w_data1 = big_temp[31:16];
+                    w_data2 = big_temp[15:0]; 
+                end
                 default:
                 begin
                     w_data1 = 16'd0;

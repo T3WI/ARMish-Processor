@@ -19,7 +19,7 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-enum logic [31:0] {START, TEST_1_1_1, TEST_1_1_2, TEST_1_1_3_1, TEST_1_1_3_2, TEST_1_1_3_3, TEST_1_1_4, TEST_1_1_5, TEST_1_2, TEST_1_3, TEST_1_4, TEST_1_5_1, TEST_1_5_2, TEST_1_5_3_1, TEST_1_5_3_2, TEST_1_5_3_3, TEST_1_5_4, TEST_1_5_5, TEST_1_6, TEST_1_7, TEST_1_8, TEST_1_9, TEST_1_1_0} tests_r;
+enum logic [63:0] {START, TEST_1_1_1, TEST_1_1_2, TEST_1_1_3_1, TEST_1_1_3_2, TEST_1_1_3_3, TEST_1_1_4, TEST_1_1_5, TEST_1_2_1, TEST_1_2_2, TEST_1_2_3, TEST_1_2_4, TEST_1_3, TEST_1_4_1, TEST_1_4_2, TEST_1_4_3_1, TEST_1_4_3_2, TEST_1_4_3_3, TEST_1_4_4, TEST_1_4_5, TEST_1_5, TEST_1_6, TEST_1_7, TEST_1_8, TEST_1_9} tests_r;
 package alu_pkg;
     logic [15:0] data_arith_1[0:15] = {0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30};
     logic [15:0] data_arith_2[0:15] = {12, 15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 45, 48, 51, 54, 57};
@@ -33,13 +33,18 @@ package alu_pkg;
     logic [15:0] z_data2[0:15] = {8, 7, 6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, -5, -6, -7};
     logic [15:0] n_data1[0:15] = {-8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7};
     logic [15:0] n_data2[0:15] = {8, 7, 4, 3, -9, -10, -2, -1, 0, 1, 2, -6, -7, -2, -3, -7};
-
+    logic [15:0] mul_data1[0:19] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 12345, 23456, 10101, 20202};
+    logic [15:0] mul_data2[0:19] = {0, -1, -2, -3, -4, -5, -6, -7, -8, -9, -10, -11, -12, -13, -14, -15, -12345, -23456, -10101, -20202};
 endpackage
 
 import alu_pkg::*;
 class alu_sb;
-    function automatic check_nzcv(input logic [3:0] nzcv, input logic [15:0] data1, input logic [15:0] data2, input logic [3:0] opcode);
-        logic [3:0] result = 4'd0;
+    function automatic check_nzcv(
+            input logic [3:0] nzcv, 
+            input logic [15:0] data1, 
+            input logic [15:0] data2, 
+            input logic [3:0] opcode);
+            logic [3:0] result = 4'd0;
         
         case(opcode)
             ADDX: 
@@ -69,7 +74,13 @@ class alu_sb;
             end
     endfunction 
 
-    function automatic check_addx(input logic signed [15:0] dut_data1, input logic signed [15:0] dut_data2, input logic signed[15:0] exp_data1, input logic signed[15:0] exp_data2, input int i);
+    function automatic check_addx(
+            input logic signed [15:0] dut_data1, 
+            input logic signed [15:0] dut_data2, 
+            input logic signed[15:0] exp_data1, 
+            input logic signed[15:0] exp_data2, 
+            input int i);
+
         shortint sum = exp_data1 + exp_data2;
         if(sum[15:0] == dut_data1 && dut_data2 == 0) begin 
             $display("[PASS] Expected: %4d", sum);
@@ -79,7 +90,13 @@ class alu_sb;
         end
     endfunction
 
-    function automatic check_subx(input logic signed [15:0] dut_data1, input logic signed [15:0] dut_data2, input logic signed[15:0] exp_data1, input logic signed[15:0] exp_data2, input int i);
+    function automatic check_subx(
+        input logic signed [15:0] dut_data1, 
+        input logic signed [15:0] dut_data2, 
+        input logic signed[15:0] exp_data1, 
+        input logic signed[15:0] exp_data2, 
+        input int i);
+
         shortint sum = exp_data1 - exp_data2;
         if(sum[15:0] == dut_data1 && dut_data2 == 0) begin 
             $display("[PASS] Expected: %4d", sum);
@@ -88,6 +105,45 @@ class alu_sb;
             $display("[FAIL] Expected: %4d | Actual: %4d", sum, dut_data1);
         end
     endfunction
+
+    function automatic check_mulx(
+        input logic signed [15:0] dut_data1, 
+        input logic signed [15:0] dut_data2, 
+        input logic signed [15:0] exp_data1, 
+        input logic signed [15:0] exp_data2);
+        logic signed [31:0] exp_prod, act_prod;
+        
+        exp_prod = exp_data1*exp_data2;
+        act_prod = $signed({$unsigned(dut_data1), $unsigned(dut_data2)});
+        if(act_prod == exp_prod) begin 
+            $display("[PASS] Expected: %0d", exp_prod);
+        end
+        else begin 
+            $display("[FAIL] Expected: %0d | Actual: %0d", exp_prod, act_prod);
+        end
+    endfunction 
+
+    function automatic check_divx(
+        input logic signed [15:0] dut_data1,
+        input logic signed [15:0] dut_data2,
+        input logic signed [15:0] exp_data1,
+        input logic signed [15:0] exp_data2);
+        logic signed [31:0] exp_div, act_div;
+        if(exp_data2 == 0) begin 
+            exp_div =32'hFFFF_FFFF;
+        end
+        else begin 
+            exp_div[31:16] = exp_data1 / exp_data2;
+            exp_div[15:0] = exp_data1 % exp_data2;
+        end
+
+        if(dut_data1 == exp_div[31:16] && dut_data2 == exp_div[15:0])begin 
+            $display("[PASS] Expected Quotient: %h, Expected Remainder: %h", exp_div[31:16], exp_div[15:0]);
+        end
+        else begin
+            $display("[FAIL] Expected Quotient: %h, Expected Remainder: %h | Actual Quotient: %h, Actual Remainder: %h", exp_div[31:16], exp_div[15:0], dut_data1, dut_data2);
+        end
+    endfunction 
 endclass
 
 import alu_pkg::*;
@@ -103,12 +159,9 @@ module alu_sim();
 
     initial begin 
         clk = 1'b0;
-        forever #10 clk = ~clk;
+        forever #500 clk = ~clk;
     end
 
-    shortint test_int1, test_int2;
-
-    // enum logic [31:0] {TEST_111=1, TEST_112, TEST_1131, TEST_1132, TEST_1133, TEST_114, TEST_115, TEST_12, TEST_13, TEST_14, TEST_151, TEST_152, TEST_1531, TEST_1532, TEST_1533, TEST_154, TEST_155, TEST_16, TEST_17, TEST_18, TEST_19, TEST_110} tests_r;
 
     function automatic string replace_underscores(input string s);
         string result = "";
@@ -122,17 +175,31 @@ module alu_sim();
         end
         return result;
     endfunction
-   
 
-    task run_addx_subx_test(input alu_sb sb, 
-        input logic [15:0] data1[0:15], 
-        input logic [15:0] data2[0:15]);
-        string start_msg, end_msg;
+    task test_header();
+        string start_msg;
         tests_r <= tests_r.next();
         @(posedge clk);       
         start_msg = $sformatf("========== START OF %s ==========", tests_r.name());
         start_msg = replace_underscores(start_msg);
         $display("%s", start_msg);
+    endtask
+
+    task test_footer();
+        string end_msg;
+        end_msg = $sformatf("========== END OF %s ==========", tests_r.name());
+        end_msg = replace_underscores(end_msg);
+        $display("%s", end_msg);
+    endtask 
+   
+    
+
+    task run_addx_subx_test(
+        input alu_sb sb, 
+        input logic [15:0] data1[0:15], 
+        input logic [15:0] data2[0:15]);
+        test_header();
+        
         @(posedge clk);
         opcode <= ADDX;
         Cin <= 1'b0;
@@ -156,11 +223,43 @@ module alu_sim();
             sb.check_nzcv(nzcv, data1[i], data2[i], opcode);
         end
         @(posedge clk);
-        end_msg = $sformatf("========== END OF %s ==========", tests_r.name());
-        end_msg = replace_underscores(end_msg);
-        $display("%s", end_msg);
+
+        test_footer();
     endtask
     
+    task run_mulx_divx_test(
+        input alu_sb sb, 
+        input logic [15:0] data1[0:19],
+        input logic [15:0] data2[0:19]);
+        test_header();
+        @(posedge clk);
+        opcode <= MULX;
+        Cin <= 1'b0;
+        s <= 1'b0;
+        @(posedge clk);
+        for(int i = 0; i < 20; i++) begin 
+            for(int j = 0; j < 20; j++) begin 
+                rn = data1[i];
+                rm = data2[j];
+                @(posedge clk);
+                sb.check_mulx(w_data1, w_data2, data1[i], data2[j]);
+            end
+        end
+        @(posedge clk);
+        opcode <= DIVX;
+        @(posedge clk);
+        for(int i = 0; i < 20; i++) begin 
+            for(int j = 0; j < 20; j++) begin 
+                rn = data1[i];
+                rm = data2[j];
+                @(posedge clk);
+                sb.check_divx(w_data1, w_data2, data1[i], data2[j]);
+            end
+        end
+        @(posedge clk);
+        test_footer();
+    endtask 
+
     
     initial begin
         sb = new();
@@ -181,6 +280,13 @@ module alu_sim();
         @(posedge clk);
         run_addx_subx_test(sb, n_data1, n_data2);
         @(posedge clk);
+        run_mulx_divx_test(sb, mul_data1, mul_data1);
+        @(posedge clk);
+        run_mulx_divx_test(sb, mul_data2, mul_data2);
+        @(posedge clk);
+        run_mulx_divx_test(sb, mul_data1, mul_data2);
+        @(posedge clk);
+        run_mulx_divx_test(sb, mul_data2, mul_data1);
         $finish; 
     end
 endmodule
