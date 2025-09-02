@@ -144,6 +144,25 @@ class alu_sb;
             $display("[FAIL] Expected Quotient: %h, Expected Remainder: %h | Actual Quotient: %h, Actual Remainder: %h", exp_div[31:16], exp_div[15:0], dut_data1, dut_data2);
         end
     endfunction 
+
+    function automatic check_absx(
+        input logic signed [15:0] dut_data1,
+        input logic signed [15:0] exp_data1);
+        logic [15:0] exp_result;
+        if(exp_data1 < 0) begin 
+            exp_result = -1*exp_data1;
+        end
+        else begin 
+            exp_result = exp_data1;
+        end
+
+        if(dut_data1 == exp_result) begin 
+            $display("[PASS] Expected: %0d", exp_result);
+        end
+        else begin 
+            $display("[FAIL] Expected: %0d | Actual: %0d", exp_result, dut_data1);
+        end
+    endfunction
 endclass
 
 import alu_pkg::*;
@@ -260,6 +279,25 @@ module alu_sim();
         test_footer();
     endtask 
 
+    task run_absx_test(
+        input alu_sb sb,
+        input logic [15:0] data1[0:15]
+    );
+        test_header();
+        @(posedge clk);
+        opcode <= ABSX;
+        Cin <= 1'b0;
+        s <= 1'b0;
+        @(posedge clk);
+        for(int i = 0; i < 16; i++) begin 
+            rn = data1[i];
+            @(posedge clk);
+            sb.check_absx(w_data1, data1[i]);
+        end
+        @(posedge clk);
+        test_footer();
+    endtask 
+
     
     initial begin
         sb = new();
@@ -287,6 +325,9 @@ module alu_sim();
         run_mulx_divx_test(sb, mul_data1, mul_data2);
         @(posedge clk);
         run_mulx_divx_test(sb, mul_data2, mul_data1);
+        @(posedge clk);
+        run_absx_test(sb, z_data1);
+        @(posedge clk);
         $finish; 
     end
 endmodule

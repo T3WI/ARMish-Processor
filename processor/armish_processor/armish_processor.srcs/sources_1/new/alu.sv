@@ -64,6 +64,10 @@ module alu(
             return result;
         end
     endfunction
+
+    function logic [15:0] absx(input logic signed [15:0] rn);
+        return (rn[15]) ? -rn : rn;
+    endfunction 
     
 
     logic [16:0] temp;
@@ -115,6 +119,11 @@ module alu(
                     big_temp = divx(rn, rm);
                     w_data1 = big_temp[31:16];
                     w_data2 = big_temp[15:0]; 
+                end
+                ABSX:
+                begin 
+                    w_data1 = absx(rn);
+                    w_data2 = 16'b0;
                 end
                 default:
                 begin
