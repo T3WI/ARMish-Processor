@@ -24,8 +24,8 @@ module shifter(
     output logic [15:0] shifted_rm,
     input logic [15:0] rm,
     input logic [15:0] imm,
-    input logic [3:0] rs,
-    input logic [3:0] shamt,
+    input logic [15:0] rs,
+    input logic [15:0] shamt,
     input logic [1:0] shtype,
     input logic r_shift,
     input logic i

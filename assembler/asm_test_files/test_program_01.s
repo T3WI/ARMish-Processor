@@ -1,13 +1,12 @@
-main:
+addx-al r1, r2, r3
 
-b-al label1
+addx-al r10, r14, #9
 
-label2:
+addx-al r1, r2, r3, lsl r4
 
-b-al end
+addx-al r1, r2, r3, lsl #4
 
-label1:
+addx-al r1, r5, #452
 
-b-al label2 
 
-end:
+
