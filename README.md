@@ -11,7 +11,7 @@ The assembler was implemented in Python, and the RTL model was implemented using
 - [x] Register FIle
 - [x] Immediate Decoder
 - [x] Shifter
-- [ ] op2dec
+- [x] op2dec
 - [ ] ALU + ALUTop
 - [ ] Data Memory
 - [ ] Pipelining and Hazard Control
