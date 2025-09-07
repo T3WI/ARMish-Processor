@@ -52,34 +52,36 @@ typedef struct packed{
 
 
 package op2dec_pkg;
-    logic [15:0] rm_set[0:15] = {0, 2, 4, 6, 8, 10, 12, 14, 16, 10000, 12000, 14000, 16000, 18000, 20000, 23456};
-    logic [15:0] rs_set[0:15] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+    logic [15:0] rm_set[0:15] = {16'hff, 16'hff, 16'hff, 16'hff, -8, -10, -12, -14, -16, 10000, 12000, 14000, 16000, 18000, 20000, 23456};
+    logic [15:0] rs_set[0:15] = {15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+    logic [15:0] shamt_set[0:15] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+    enum logic [1:0] {ROR=2'd0, ASR=2'd1, LSR=2'd2, LSL=2'd3} shtype_t;
 endpackage
 
+import op2dec_pkg::*;
 class op2dec_sb;
-    enum logic [1:0] {ROR=2'd0, ASR=2'd1, LSR=2'd2, LSL=2'd3} shtype_t;
-    function logic [15:0] ror(input logic [15:0] imm, input logic [3:0] shift_amount);
+    function logic [15:0] ror(input logic signed [15:0] imm, input logic [3:0] shift_amount);
         ror = (imm >> shift_amount) | (imm << (16 - shift_amount)); 
     endfunction 
 
-    function logic [15:0] asr(input logic [15:0] imm, input logic [3:0] shift_amount);
+    function logic [15:0] asr(input logic signed [15:0] imm, input logic [3:0] shift_amount);
         asr = imm >>> shift_amount;
     endfunction 
 
-    function logic [15:0] lsr(input logic [15:0] imm, input logic [3:0] shift_amount);
+    function logic [15:0] lsr(input logic signed [15:0] imm, input logic [3:0] shift_amount);
         lsr = imm >> shift_amount;
     endfunction 
 
-    function logic [15:0] lsl(input logic [15:0] imm, input logic [3:0] shift_amount);
+    function logic [15:0] lsl(input logic signed [15:0] imm, input logic [3:0] shift_amount);
         lsl = imm << shift_amount;
     endfunction 
 
      function check_op2_imm(
-        input logic [15:0] rm_dec, 
+        input logic signed [15:0] rm_dec, 
         input logic [7:0] imm_m, 
         input logic [3:0] rot_m);
         // TODO
-        logic [15:0] exp_rm = ror(imm_m, rot_m);
+        logic signed [15:0] exp_rm = ror(imm_m, rot_m);
         if(rm_dec == exp_rm) begin
             $display("[PASS] Expected: %d", exp_rm); 
         end
@@ -90,14 +92,16 @@ class op2dec_sb;
 
     // sb.check_op2_reg_shamt(rm_dec, rm, i, shtype, r_shift, shamt);
     function automatic check_op2_reg(
-        input logic [15:0] rm_dec,
-        input logic [15:0] rm,
+        input logic signed [15:0] rm_dec,
+        input logic signed [15:0] rm,
         input logic [1:0] shtype,
         input logic r_shift,
-        input logic rs,
+        input logic [3:0] rs,
         input logic [3:0] shamt
     );
-        logic [15:0] shift_value, exp_rm;
+        logic [15:0] shift_value;
+        logic signed [15:0] exp_rm;
+        
         if(r_shift) begin 
             shift_value = rs;
         end
@@ -112,10 +116,10 @@ class op2dec_sb;
             default: exp_rm = 16'd0;
         endcase
         if(rm_dec == exp_rm) begin 
-            $display("[PASS] Expected: %16d", exp_rm);
+            $display("[PASS] Expected: %16b", exp_rm);
         end
         else begin 
-            $display("[FAIL] Expected: %16d | Actual: %16d", exp_rm, rm_dec);
+            $display("[FAIL] Expected: %16b | Actual: %16b", exp_rm, rm_dec);
         end 
     endfunction
 endclass
@@ -185,7 +189,7 @@ module op2dec_sim();
         for(int j = 0; j < count; j++) begin 
             op2_reg_shamt_mem[j].shtype = instructions[j].op2[11:10];
             op2_reg_shamt_mem[j].shamt = instructions[j].op2[9:6];
-            op2_reg_shamt_mem[j].r_shift = instructions[j].op2[5];
+            op2_reg_shamt_mem[j].r_shift = instructions[j].op2[4];
             op2_reg_shamt_mem[j].rm = rm_set[j];
         end
     endtask 
@@ -286,6 +290,35 @@ module op2dec_sim();
         test_footer();
     endtask
 
+    task test_122(input string file, input logic [1:0] exp_shifttype, input logic exp_rshift);
+        test_header();
+        @(posedge clk);
+        load_from_file(file);
+        @(posedge clk);
+        count_instructions(file);
+        @(posedge clk);
+        load_from_mem();
+        @(posedge clk);
+        load_op2_reg_shamt();
+        @(posedge clk);
+        for(int j = 0; j < count; j++) begin 
+            imm_m = op2_reg_shamt_mem[j][11:8];
+            rot_m = op2_reg_shamt_mem[j][7:0];
+            rm = rm_set[j];
+            i = instructions[j].i;
+            shtype = op2_reg_shamt_mem[j].shtype;
+            r_shift = op2_reg_shamt_mem[j].r_shift;
+            rs = rs_set[j];
+            shamt = op2_reg_shamt_mem[j].shamt;
+            @(posedge clk);
+            sb.check_op2_reg(rm_dec, rm, exp_shifttype, exp_rshift, rs, shamt_set[j]);
+        end
+        @(posedge clk);
+        clear_memories();
+        @(posedge clk);
+        test_footer();
+    endtask 
+
     op2_decode od(.rm_dec(rm_dec), .rm(rm), .rs(rs), .imm_m(imm_m), .shamt(shamt), .rot_m(rot_m), .shtype(shtype), .i(i), .r_shift(r_shift));
 
     initial begin 
@@ -294,6 +327,24 @@ module op2dec_sim();
         test_11();
         @(posedge clk);
         test_121();
+        @(posedge clk);
+        
+        test_122("op2dec_rm_imm_ror.bin", ROR, 0);
+        @(posedge clk);
+        test_122("op2dec_rm_imm_asr.bin", ASR, 0);
+        @(posedge clk);
+        test_122("op2dec_rm_imm_lsr.bin", LSR, 0);
+        @(posedge clk);
+        test_122("op2dec_rm_imm_lsl.bin", LSL, 0);
+        @(posedge clk);
+
+        test_122("op2dec_rm_rs_ror.bin", ROR, 1);
+        @(posedge clk);
+        test_122("op2dec_rm_rs_asr.bin", ASR, 1);
+        @(posedge clk);
+        test_122("op2dec_rm_rs_lsr.bin", LSR, 1);
+        @(posedge clk);
+        test_122("op2dec_rm_rs_lsl.bin", LSL, 1);
         @(posedge clk);
         $finish;
     end

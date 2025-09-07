@@ -335,14 +335,15 @@ def parse_rx(token):
                     r_n = get_reg_number(token[7])
                     op2 = get_immediate(token[10])
             else:
+                # something here is wrong 
                 r_d = get_reg_number(token[3])
                 r_n = get_reg_number(token[5])
                 r_m = get_reg_number(token[7])
-                
                 shtype = convert_string_shtype_to_enum(token[9]).value
                 r_s = get_reg_number(token[10])
                 r_shift = '1'
                 op2 = shtype + r_s + '0' + r_shift + r_m
+                print(op2)
         case 12:
             I = '0'
             S = '0'
