@@ -30,16 +30,17 @@ module alu_top(
     input logic en, 
     input logic [1:0] instr_class,
     input logic [3:0] opcode
+    input logic u
     );
     logic [3:0] _opcode;
     always_comb begin 
         case(instr_class)
             RX: _opcode = opcode;
-            // D:  _opcode = ADDX;
-            // B:  _opcode = ADDX; 
+            D:  _opcode = u ? ADDX : SUBX;
+            B:  _opcode = ADDX; 
             default: _opcode = ADDX;     // used for D and B?
         endcase
     end
     
-    alu al(.w_data1(w_data1), .w_data2(w_data2), .nzcv(nzcv), .rn(rn), .rm(rm), .opcode(_opcode), .en(en), .Cin(Cin), .s(s));
+    alu a(.w_data1(w_data1), .w_data2(w_data2), .nzcv(nzcv), .rn(rn), .rm(rm_dec), .opcode(_opcode), .en(en), .Cin(Cin), .s(s));
 endmodule

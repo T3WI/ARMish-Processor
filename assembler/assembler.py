@@ -343,7 +343,6 @@ def parse_rx(token):
                 r_s = get_reg_number(token[10])
                 r_shift = '1'
                 op2 = shtype + r_s + '0' + r_shift + r_m
-                print(op2)
         case 12:
             I = '0'
             S = '0'
@@ -476,6 +475,7 @@ def parse_d(token):
             raise Exception("Invalid instruction. Check for syntax errors.")
 
     machine_code = cond_bits + operation_bits + I + U + r_n + r_d + offset
+    
     return machine_code
 
 def conv_to_2s(value, bits):
@@ -567,6 +567,7 @@ def second_pass(token, lc, line):
         # print(f"{machine_code:<32} : {line:<40} : len: {len(token)}")
     elif instr_type == Instruction_Type.D:
         machine_code =  parse_d(token)
+        print(f"{line} : {machine_code}")
         check_mc_validity(token, line, machine_code)
         # if len(token) == 15:
         #     print(line)

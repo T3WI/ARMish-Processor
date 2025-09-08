@@ -24,9 +24,9 @@ module reg_file(
     output logic [15:0] r_data1,
     output logic [15:0] r_data2,
     output logic [15:0] r_data3,
-    input logic [3:0] r_reg1,
-    input logic [3:0] r_reg2,
-    input logic [3:0] r_reg3,
+    input logic [3:0] r_reg1,           // rn
+    input logic [3:0] r_reg2,           // rm
+    input logic [3:0] r_reg3,           // rs
     input logic [15:0] w_data1,
     input logic [15:0] w_data2,
     input logic [3:0] w_reg1,
