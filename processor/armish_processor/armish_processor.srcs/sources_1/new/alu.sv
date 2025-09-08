@@ -18,7 +18,7 @@
 // Additional Comments:
 // 
 //////////////////////////////////////////////////////////////////////////////////
-typedef enum logic [3:0] {ADDX, SUBX, MULX, DIVX, ABSX, ADCX, SBCX, CMPX, NOTX, ANDX, ORRX, XORX} operation_t;
+typedef enum logic [3:0] {ADDX, SUBX, MULX, DIVX, ABSX, ADCX, SBCX, CMPX, NOTX, ANDX, ORRX, XORX, NOOP} operation_t;
 
 module alu(
     output logic [15:0] w_data1,
@@ -196,6 +196,12 @@ module alu(
                 begin
                     w_data1 = xorx(rn, rm);
                     w_data2 = 16'b0; 
+                end
+                NOOP:   // should not change NZCV
+                begin 
+                    w_data1 = 16'd0;
+                    w_data2 = 16'd0;
+                    temp = 17'd0;
                 end
                 default:
                 begin

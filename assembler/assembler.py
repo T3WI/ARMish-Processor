@@ -574,7 +574,6 @@ def second_pass(token, lc, line):
     elif instr_type == Instruction_Type.B:
         machine_code =  parse_b(token, lc)
         check_mc_validity(token, line, machine_code)
-        print(f"{line} : {machine_code}")
         # check_mc_validity(machine_code)
         # if len(token) == 15:
         #     print(line)

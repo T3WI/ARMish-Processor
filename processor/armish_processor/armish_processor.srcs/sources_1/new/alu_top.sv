@@ -20,6 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 typedef enum logic [1:0] {B, D, RF, RX} instr_t;
 module alu_top(
+    // output logic [3:0] _opcode,     // for debugging purposes in alutop_sim.sv
     output logic [15:0] w_data1,
     output logic [15:0] w_data2,
     output logic [3:0] nzcv,
@@ -29,16 +30,17 @@ module alu_top(
     input logic Cin,
     input logic en, 
     input logic [1:0] instr_class,
-    input logic [3:0] opcode
+    input logic [3:0] opcode,
     input logic u
     );
     logic [3:0] _opcode;
     always_comb begin 
         case(instr_class)
             RX: _opcode = opcode;
+            RF: _opcode = NOOP;
             D:  _opcode = u ? ADDX : SUBX;
-            B:  _opcode = ADDX; 
-            default: _opcode = ADDX;     // used for D and B?
+            B:  _opcode = NOOP;                // output 0, branching handled elsewhere
+            default: _opcode = ADDX;            // used for D and B?
         endcase
     end
     
