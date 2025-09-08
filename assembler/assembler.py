@@ -45,12 +45,12 @@ mneumonics = {
     "xorx": "111011",
 
 
-    "ldw": "010000",
-    "ldb2l": "010001",
+    "ldw": "010110",
+    "ldb2l": "010000",
     "ldb2h": "010010",
-    "stw": "010011",
-    "stb2l": "010100",
-    "stb2h": "010101",
+    "stw": "011110",
+    "stb2l": "011000",
+    "stb2h": "011010",
 
     "bx": "0010",
     "b": "0000",
@@ -567,7 +567,6 @@ def second_pass(token, lc, line):
         # print(f"{machine_code:<32} : {line:<40} : len: {len(token)}")
     elif instr_type == Instruction_Type.D:
         machine_code =  parse_d(token)
-        print(f"{line} : {machine_code}")
         check_mc_validity(token, line, machine_code)
         # if len(token) == 15:
         #     print(line)
@@ -575,6 +574,7 @@ def second_pass(token, lc, line):
     elif instr_type == Instruction_Type.B:
         machine_code =  parse_b(token, lc)
         check_mc_validity(token, line, machine_code)
+        print(f"{line} : {machine_code}")
         # check_mc_validity(machine_code)
         # if len(token) == 15:
         #     print(line)
