@@ -13,6 +13,7 @@ The assembler was implemented in Python, and the RTL model was implemented using
 - [x] Shifter
 - [x] op2dec
 - [ ] ALU + ALUTop
+- [ ] Memory Access Module
 - [ ] Data Memory
 - [ ] Pipelining and Hazard Control
 - [ ] FPU
