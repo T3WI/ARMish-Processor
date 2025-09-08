@@ -15,6 +15,7 @@ The assembler was implemented in Python, and the RTL model was implemented using
 - [ ] ALU + ALUTop
 - [ ] Memory Access Module
 - [ ] Data Memory
+- [ ] Branching Unit
 - [ ] Pipelining and Hazard Control
 - [ ] FPU
 - [ ] Other Features
