@@ -18,7 +18,6 @@
 // Additional Comments:
 // 
 //////////////////////////////////////////////////////////////////////////////////
-import top_pkg::*;
 module top_sim();
     bit clk;
     bit reset;
@@ -33,7 +32,7 @@ module top_sim();
         forever #10 clk = ~clk;
     end
     
-    bit[31:0]temp_mem[0:255];
+    bit[31:0] temp_mem[0:255];
     logic [31:0] w_instruction;
     logic [9:0] w_address;
     logic instrmem_we;
@@ -65,33 +64,42 @@ module top_sim();
         for(int i = 0; i < count; i++) begin
             w_instruction = temp_mem[i];
             w_address = i;
-            #20;
+            @(posedge clk);
         end 
+    endtask 
+
+    task run_program();
+        reset = 1'b1;
+        @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
+        reset = 1'b0;
+        @(posedge clk);
+        load_from_file();
+        @(posedge clk);
+        count_instructions(count);
+        @(posedge clk);
+        load_ready = 1'b1; 
+        @(posedge clk); 
+        instrmem_we = 1'b1;
+        @(posedge clk);
+        load_instruction_mem();
+        instrmem_we = 1'b0;
+        @(posedge clk);
+        load_done = 1'b1;
+        if(load_done) load_ready = 1'b0;
+        @(posedge clk);
+        while(!execute_done) begin 
+            @(posedge clk);
+        end
     endtask 
     
     top t(.done(done), .execute_done(execute_done), .instrmem_w_address(w_address), .instrmem_w_instruction(w_instruction), .clk(clk), .reset(reset), .load_ready(load_ready), .load_done(load_done), .instrmem_we(instrmem_we));
     
     // Test: Address with positive offset
     initial begin
-        reset = 1'b1;
-        #10;
-        reset = 1'b0;
-        #10;
-        load_from_file();
-        #10;
-        count_instructions(count);
-        #10;
-        load_ready = 1'b1; 
-        #10;  
-        instrmem_we = 1'b1;
-        #10;
-        load_instruction_mem();
-        instrmem_we = 1'b0;
-        #10;
-        load_done = 1'b1;
-        if(load_done) load_ready = 1'b0;
-        
-        
+        run_program();
+        $finish;
     end 
     
 endmodule
