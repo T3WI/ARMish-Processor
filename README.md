@@ -13,7 +13,7 @@ The assembler was implemented in Python, and the RTL model with verification tes
 - [x] Shifter
 - [x] op2dec
 - [x] ALU + ALUTop
-- [ ] ALU Control
+- [ ] Control Unit
 - [ ] Memory Access Module
 - [ ] Data Memory
 - [ ] Branching Unit
