@@ -18,8 +18,8 @@
 // Additional Comments:
 // 
 //////////////////////////////////////////////////////////////////////////////////
-typedef enum logic [3:0] {ADDX, SUBX, MULX, DIVX, ABSX, ADCX, SBCX, CMPX, NOTX, ANDX, ORRX, XORX, NOOP} operation_t;
 
+import cpu_pkg::*;
 module alu(
     output logic [15:0] w_data1,
     output logic [15:0] w_data2,
@@ -34,7 +34,6 @@ module alu(
     input logic Cin,
     input logic s
     );
-        
 
 
     function logic [16:0] addx(input logic signed [15:0] rn, input logic signed [15:0] rm, input logic Cin);

@@ -18,7 +18,8 @@
 // Additional Comments:
 // 
 //////////////////////////////////////////////////////////////////////////////////
-typedef enum logic [1:0] {B, D, RF, RX} instr_t;
+
+import cpu_pkg::*;
 module alu_top(
     // output logic [3:0] _opcode,     // for debugging purposes in alutop_sim.sv
     output logic [15:0] w_data1,

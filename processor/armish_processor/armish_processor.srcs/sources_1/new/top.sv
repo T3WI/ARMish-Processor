@@ -18,8 +18,7 @@
 // Additional Comments:
 // 
 //////////////////////////////////////////////////////////////////////////////////
-
-
+import cpu_pkg::*;
 module top(
     output logic done,
     output logic execute_done,
@@ -31,8 +30,8 @@ module top(
     input logic load_ready,
     input logic load_done
     );
-    enum logic[1:0] {IDLE=2'd0, LOAD_INSTR=2'd1, EXECUTE_PROGRAM=2'd2, FINISH=2'd3} curr_state;
-    typedef enum logic[3:0] {HALT, AL, LE, GT, LT, GE, LS, HI, VC,  VS, PL, MI, CC, CS, NEQ, EQ} cond_t;
+    program_state curr_state;
+    
 
     // Program Counter Signals
     logic [15:0] pc;
@@ -57,6 +56,10 @@ module top(
         .clk(clk)
         );
 
+    // Control Unit
+    // main_control mcu(
+    
+    // );
 
     // Register File Signals
     logic [3:0]     r_reg1, r_reg2, r_reg3;
@@ -93,7 +96,7 @@ module top(
     logic [7:0] imm_m;
     logic [3:0] rot_m;
     logic [15:0] rm;
-    logic i;
+    logic i;        
     logic [1:0] shtype;
     logic r_shift;
     logic [3:0] shamt;
@@ -102,7 +105,7 @@ module top(
     assign imm_m = instruction[7:0];
     assign rot_m = instruction[11:8];
     assign rm = r_data2;
-    assign i = instruction[21];
+    assign i = instruction[21];                 // PUT INTO CONTROL UNIT
     assign shtype = instruction[11:10];
     assign r_shift = instruction[4];
     assign shamt = instruction[9:6];
@@ -123,18 +126,18 @@ module top(
     // alu top signals
     logic [3:0] nzcv;
     logic [15:0] rn;
-    logic s;
+    logic s;                        // soru
     logic Cin;
     logic en; 
     logic [1:0] instr_class;
     logic [3:0] opcode;
-    logic u;
+    logic u;                        // soru
 
-    assign s = instruction[20];     // also U for D instructions
+    assign s = instruction[20];     // also U for D instructions    // GOES INTO CONTROL UNIT
     assign en = 1'b1;               // temporary
-    assign instr_class = instruction[27:26];
-    assign opcode = instruction[25:22];
-    assign u = instruction[20];     // also S for RX instructions
+    assign instr_class = instruction[27:26];                        // GOES INTO CONTROL UNIT
+    assign opcode = instruction[25:22];                             // GOES INTO CONTROL UNIT
+    assign u = instruction[20];     // also S for RX instructions   // GOES INTO CONTROL UNIT
 
     alu_top alt(
         .w_data1(w_data1), 
