@@ -30,11 +30,11 @@ module alu_top(
     input logic s,
     input logic Cin,
     input logic en, 
-    input logic [1:0] instr_class,
-    input logic [3:0] opcode,
+    input instr_t instr_class,
+    input operation_t opcode,
     input logic u
     );
-    logic [3:0] _opcode;
+    operation_t _opcode;
     always_comb begin 
         case(instr_class)
             RX: _opcode = opcode;

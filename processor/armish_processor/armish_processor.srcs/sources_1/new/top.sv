@@ -57,16 +57,29 @@ module top(
         );
 
     // Control Unit
-    // main_control mcu(
-    
-    // );
+    logic reg_write1, reg_write2, mem_write, mem2reg;
+    logic i, s_or_u, alu_en;       
+    instr_t instr_class;
+    operation_t opcode; 
+    main_control mcu(
+        .reg_write1(reg_write1),
+        .reg_write2(reg_write2),
+        .mem_write(mem_write),          // unused until data mem is implemented
+        .mem2reg(mem2reg),              // unused until data mem is implemented
+        .i(i),
+        .s_or_u(s_or_u),
+        .instr_class(instr_class),
+        .opcode(opcode),
+        .alu_en(alu_en),
+        .instruction(instruction)
+    );
 
     // Register File Signals
     logic [3:0]     r_reg1, r_reg2, r_reg3;
     logic [15:0]    r_data1, r_data2, r_data3;
     logic [3:0]     w_reg1, w_reg2;
     logic [15:0]    w_data1, w_data2;
-    logic           reg_write1, reg_write2;
+    
 
     // Register file input logic 
     assign r_reg1 = instruction[19:16];         // Rn
@@ -85,8 +98,8 @@ module top(
         .w_data2(w_data2),
         .w_reg1(w_reg1),
         .w_reg2(w_reg2),
-        .reg_write1(1'b1),                      // TEMPORARY 1'b1
-        .reg_write2(1'b1),
+        .reg_write1(reg_write1),                      
+        .reg_write2(reg_write2),
         .clk(clk),
         .reset(reset)
         );
@@ -96,7 +109,7 @@ module top(
     logic [7:0] imm_m;
     logic [3:0] rot_m;
     logic [15:0] rm;
-    logic i;        
+    
     logic [1:0] shtype;
     logic r_shift;
     logic [3:0] shamt;
@@ -105,7 +118,7 @@ module top(
     assign imm_m = instruction[7:0];
     assign rot_m = instruction[11:8];
     assign rm = r_data2;
-    assign i = instruction[21];                 // PUT INTO CONTROL UNIT
+
     assign shtype = instruction[11:10];
     assign r_shift = instruction[4];
     assign shamt = instruction[9:6];
@@ -126,18 +139,8 @@ module top(
     // alu top signals
     logic [3:0] nzcv;
     logic [15:0] rn;
-    logic s;                        // soru
-    logic Cin;
-    logic en; 
-    logic [1:0] instr_class;
-    logic [3:0] opcode;
-    logic u;                        // soru
+    logic Cin; 
 
-    assign s = instruction[20];     // also U for D instructions    // GOES INTO CONTROL UNIT
-    assign en = 1'b1;               // temporary
-    assign instr_class = instruction[27:26];                        // GOES INTO CONTROL UNIT
-    assign opcode = instruction[25:22];                             // GOES INTO CONTROL UNIT
-    assign u = instruction[20];     // also S for RX instructions   // GOES INTO CONTROL UNIT
 
     alu_top alt(
         .w_data1(w_data1), 
@@ -145,12 +148,12 @@ module top(
         .nzcv(nzcv),
         .rn(r_data1),
         .rm_dec(rm_dec),
-        .s(s),
+        .s(s_or_u),
         .Cin(nzcv[1]),
-        .en(en),
+        .en(alu_en),
         .instr_class(instr_class),
         .opcode(opcode),
-        .u(u)
+        .u(s_or_u)
     );
     
     

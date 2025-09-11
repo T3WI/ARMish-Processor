@@ -9,7 +9,7 @@ module main_control(
     output logic s_or_u,            
     output instr_t instr_class,     
     output operation_t opcode,      
-    output logic en,                
+    output logic alu_en,                
     input logic [31:0] instruction
     );
     
@@ -17,7 +17,7 @@ module main_control(
     assign s_or_u = instruction[20];
     assign instr_class = instr_t'(instruction[27:26]);
     assign opcode = operation_t'(instruction[25:22]);
-    assign en = 1'b1;           // TEMPORARY
+    assign alu_en = 1'b1;           // TEMPORARY
 
     always_comb begin 
         reg_write1 = 0;
