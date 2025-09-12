@@ -155,6 +155,7 @@ module main_control_sim();
     operation_t opcode;
     logic alu_en;
     logic [31:0] instruction;
+    logic [3:0] nzcv;
     main_control mcu(
         .reg_write1(reg_write1), 
         .reg_write2(reg_write2), 
@@ -165,7 +166,8 @@ module main_control_sim();
         .instr_class(instr_class),
         .opcode(opcode),
         .alu_en(alu_en),
-        .instruction(instruction)
+        .instruction(instruction),
+        .nzcv(nzcv)
         );
     scoreboard sb;
     initial begin 
@@ -174,10 +176,12 @@ module main_control_sim();
         @(posedge clk);
         load_instr("out.bin");
         @(posedge clk);
+        nzcv = 4'b0100;         // test nzcv function
         for(int i = 0; i < count; i++) begin 
             instruction = test_instr[i];
             @(posedge clk);
             sb.check(instruction, reg_write1, reg_write2, mem_write, mem2reg);
         end
+        $finish;
     end
 endmodule

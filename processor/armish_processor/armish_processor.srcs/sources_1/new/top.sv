@@ -58,9 +58,21 @@ module top(
 
     // Control Unit
     logic reg_write1, reg_write2, mem_write, mem2reg;
-    logic i, s_or_u, alu_en;       
+    logic i, s_or_u, alu_en, cond_met;       
     instr_t instr_class;
     operation_t opcode; 
+    logic [3:0] nzcv, prev_nzcv;
+
+    // nzcv flag update
+    always_ff @(posedge clk) begin 
+        if(reset) begin 
+            prev_nzcv <= 0;
+        end
+        else begin 
+            prev_nzcv <= nzcv;
+        end
+    end
+
     main_control mcu(
         .reg_write1(reg_write1),
         .reg_write2(reg_write2),
@@ -71,7 +83,9 @@ module top(
         .instr_class(instr_class),
         .opcode(opcode),
         .alu_en(alu_en),
-        .instruction(instruction)
+        .cond_met(cond_met),
+        .instruction(instruction),
+        .nzcv(prev_nzcv)
     );
 
     // Register File Signals
@@ -137,7 +151,6 @@ module top(
     );
 
     // alu top signals
-    logic [3:0] nzcv;
     logic [15:0] rn;
     logic Cin; 
 
