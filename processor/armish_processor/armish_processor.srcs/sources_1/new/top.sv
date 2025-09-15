@@ -57,7 +57,8 @@ module top(
         );
 
     // Control Unit
-    logic reg_write1, reg_write2, mem_write, mem2reg;
+    logic reg_write1, reg_write2, mem_write, mem_read, mem2reg;
+    logic [1:0] byte_sel;
     logic i, s_or_u, alu_en, cond_met;       
     instr_t instr_class;
     operation_t opcode; 
@@ -83,6 +84,8 @@ module top(
         .instr_class(instr_class),
         .opcode(opcode),
         .alu_en(alu_en),
+        .mem_read(mem_read),
+        .byte_sel(byte_sel),
         .cond_met(cond_met),
         .instruction(instruction),
         .nzcv(prev_nzcv)
@@ -167,6 +170,10 @@ module top(
         .instr_class(instr_class),
         .opcode(opcode),
         .u(s_or_u)
+    );
+
+    data_memry dm(
+        
     );
     
     
