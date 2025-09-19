@@ -30,4 +30,5 @@ package cpu_pkg;
         logic valid;
         logic [7:0] data;
     } mem_loc_t;
+    
 endpackage

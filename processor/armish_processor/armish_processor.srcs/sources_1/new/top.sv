@@ -55,14 +55,43 @@ module top(
         .w_e(instrmem_we), 
         .clk(clk)
         );
-
-    // Control Unit
+    //****************************************************************************************************************//
+    // Control Unit Signals
     logic reg_write1, reg_write2, mem_write, mem_read, mem2reg;
     logic [1:0] byte_sel;
     logic i, s_or_u, alu_en, cond_met;       
     instr_t instr_class;
     operation_t opcode; 
     logic [3:0] nzcv, prev_nzcv;
+    // Register File Signals
+    logic [3:0]     r_reg1, r_reg2, r_reg3, r_reg4;
+    logic [15:0]    r_data1, r_data2, r_data3, r_data4;
+    logic [3:0]     w_reg1, w_reg2;
+    logic [15:0]    w_data1, w_data2;
+    logic[15:0]     alu_data1, alu_data2;
+    // op2_decode Signals
+    logic [15:0] rm_dec;
+    logic [7:0] imm_m;
+    logic [3:0] rot_m;
+    logic [15:0] rm;
+    logic [1:0] shtype;
+    logic r_shift;
+    logic [3:0] shamt;
+    logic [15:0] rs;
+    // alu top signals
+    logic [15:0] rn;
+    logic Cin; 
+    // data memory signals
+    logic [15:0] mem_data;
+
+    // WB Signals
+    logic [15:0] wb_alu_data1, wb_alu_data2;
+    logic [3:0] wb_w_reg1, wb_w_reg2;
+    logic [15:0] wb_mem_data;
+    logic wb_mem2reg, wb_reg_write1, wb_reg_write2;
+
+
+
 
     // nzcv flag update
     always_ff @(posedge clk) begin 
@@ -73,11 +102,12 @@ module top(
             prev_nzcv <= nzcv;
         end
     end
+    
 
     main_control mcu(
         .reg_write1(reg_write1),
         .reg_write2(reg_write2),
-        .mem_write(mem_write),          // unused until data mem is implemented
+        .mem_write(mem_write),          
         .mem2reg(mem2reg),              // unused until data mem is implemented
         .i(i),
         .s_or_u(s_or_u),
@@ -89,49 +119,39 @@ module top(
         .cond_met(cond_met),
         .instruction(instruction),
         .nzcv(prev_nzcv)
-    );
-
-    // Register File Signals
-    logic [3:0]     r_reg1, r_reg2, r_reg3;
-    logic [15:0]    r_data1, r_data2, r_data3;
-    logic [3:0]     w_reg1, w_reg2;
-    logic [15:0]    w_data1, w_data2;
-    
+    ); 
 
     // Register file input logic 
     assign r_reg1 = instruction[19:16];         // Rn
     assign r_reg2 = instruction[3:0];           // Rm
     assign r_reg3 = instruction[9:6];           // Rs
+    assign r_reg4 = instruction[15:12];
     assign w_reg1 = instruction[15:12];         // Rd1
     assign w_reg2 = instruction[11:8];              // Rd2
+
+    assign w_data1 = wb_mem2reg ? mem_data : wb_alu_data1;      // change to wb_mem_data later?
+    assign w_data2 = wb_alu_data2;
     reg_file rf(
         .r_data1(r_data1), 
         .r_data2(r_data2), 
         .r_data3(r_data3), 
+        .r_data4(r_data4),
         .r_reg1(r_reg1), 
         .r_reg2(r_reg2), 
         .r_reg3(r_reg3),
+        .r_reg4(r_reg4),
         .w_data1(w_data1),
         .w_data2(w_data2),
-        .w_reg1(w_reg1),
-        .w_reg2(w_reg2),
-        .reg_write1(reg_write1),                      
-        .reg_write2(reg_write2),
+        .w_reg1(wb_w_reg1),
+        .w_reg2(wb_w_reg2),
+        .reg_write1(wb_reg_write1),                      
+        .reg_write2(wb_reg_write2),
         .clk(clk),
         .reset(reset)
         );
-    
-    // op2_decode Signals
-    logic [15:0] rm_dec;
-    logic [7:0] imm_m;
-    logic [3:0] rot_m;
-    logic [15:0] rm;
-    
-    logic [1:0] shtype;
-    logic r_shift;
-    logic [3:0] shamt;
-    logic [15:0] rs;
 
+
+    // op2dec
     assign imm_m = instruction[7:0];
     assign rot_m = instruction[11:8];
     assign rm = r_data2;
@@ -153,14 +173,9 @@ module top(
         .rs(rs)
     );
 
-    // alu top signals
-    logic [15:0] rn;
-    logic Cin; 
-
-
     alu_top alt(
-        .w_data1(w_data1), 
-        .w_data2(w_data2),
+        .w_data1(alu_data1), 
+        .w_data2(alu_data2),
         .nzcv(nzcv),
         .rn(r_data1),
         .rm_dec(rm_dec),
@@ -172,12 +187,42 @@ module top(
         .u(s_or_u)
     );
 
-    data_memry dm(
-        
+    
+    data_memory dm(
+        .r_data(mem_data),              
+        .w_data(r_data4),                          
+        .addr(alu_data1),
+        .mem_write(mem_write),
+        .mem_read(mem_read),
+        .byte_sel(byte_sel),
+        .clk(clk),
+        .reset(reset)
     );
+
     
-    
-    
+    wb_reg wb(
+        .wb_alu_data1(wb_alu_data1),    //
+        .wb_alu_data2(wb_alu_data2),    //
+        .wb_w_reg1(wb_w_reg1),          //
+        .wb_w_reg2(wb_w_reg2),          //
+        .wb_mem_data(wb_mem_data),      //
+        .wb_mem2reg(wb_mem2reg),        //
+        .wb_reg_write1(wb_reg_write1),  //
+        .wb_reg_write2(wb_reg_write2),  //
+
+        .alu_data1(alu_data1),
+        .alu_data2(alu_data2),
+        .w_reg1(w_reg1),
+        .w_reg2(w_reg2),
+        .mem_data(mem_data),
+        .mem2reg(mem2reg),
+        .reg_write1(reg_write1),
+        .reg_write2(reg_write2),
+
+        .clk(clk),
+        .reset(reset)
+    );
+
     
     always_ff@(posedge clk) begin 
         if(reset) begin 
@@ -198,7 +243,7 @@ module top(
                 end
                 LOAD_INSTR: begin 
                     done <= 1'b0;
-                    if(load_done) begin                 // testbench should raise load_done somehow 
+                    if(load_done) begin                 
                         curr_state <= EXECUTE_PROGRAM;
                         pc <= 16'b0;
                     end

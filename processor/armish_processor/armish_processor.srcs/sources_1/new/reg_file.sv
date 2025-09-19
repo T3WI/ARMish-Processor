@@ -21,16 +21,18 @@
 
 // NOTE: w_reg1 has priority of w_reg2
 module reg_file(
-    output logic [15:0] r_data1,
-    output logic [15:0] r_data2,
-    output logic [15:0] r_data3,
-    input logic [3:0] r_reg1,           // rn
-    input logic [3:0] r_reg2,           // rm
-    input logic [3:0] r_reg3,           // rs
+    output logic [15:0] r_data1,        // rn
+    output logic [15:0] r_data2,        // rm
+    output logic [15:0] r_data3,        // rs
+    output logic [15:0] r_data4,        // rt
+    input logic [3:0] r_reg1,           
+    input logic [3:0] r_reg2,           
+    input logic [3:0] r_reg3,           
+    input logic [3:0] r_reg4,
     input logic [15:0] w_data1,
     input logic [15:0] w_data2,
-    input logic [3:0] w_reg1,
-    input logic [3:0] w_reg2,
+    input logic [3:0] w_reg1,           
+    input logic [3:0] w_reg2,           
     input logic reg_write1,
     input logic reg_write2,
     input logic clk,
@@ -56,8 +58,9 @@ module reg_file(
         end
     end
     
-   
+    // Read logic
     assign r_data1 = (r_reg1 == 0) ? 16'h0000 : register_file[r_reg1];
     assign r_data2 = (r_reg2 == 0) ? 16'h0000 : register_file[r_reg2];
     assign r_data3 = (r_reg3 == 0) ? 16'h0000 : register_file[r_reg3];
+    assign r_data4 = (r_reg4 == 0) ? 16'h0000 : register_file[r_reg4];
 endmodule
