@@ -14,8 +14,7 @@ The assembler was implemented in Python, and the RTL model with verification tes
 - [x] op2dec
 - [x] ALU + ALUTop
 - [x] Main Control Unit
-- [ ] Memory Access Module
-- [ ] Data Memory
+- [x] Data Memory
 - [ ] Branching Unit
 - [ ] Pipelining and Hazard Control
 - [ ] FPU
