@@ -12,7 +12,8 @@ module main_control(
     output logic alu_en, 
     output logic mem_read,      // NEW!
     output logic [1:0] byte_sel, // NEW!
-    output logic cond_met,               
+    output logic cond_met,          
+    output logic branch,     
     input logic [31:0] instruction,
     input logic [3:0] nzcv
     );
@@ -29,6 +30,7 @@ module main_control(
     assign mem_write = mw & cond_met;
     assign mem_read = mr & cond_met;
     assign mem2reg = m2r & cond_met;
+    assign branch = (instr_class == B) & cond_met;
 
     cond_logic_block clb(
         .cond_met(cond_met), 

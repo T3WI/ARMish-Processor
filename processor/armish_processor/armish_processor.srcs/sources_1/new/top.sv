@@ -59,7 +59,7 @@ module top(
     // Control Unit Signals
     logic reg_write1, reg_write2, mem_write, mem_read, mem2reg;
     logic [1:0] byte_sel;
-    logic i, s_or_u, alu_en, cond_met;       
+    logic i, s_or_u, alu_en, cond_met, branch;       
     instr_t instr_class;
     operation_t opcode; 
     logic [3:0] nzcv, prev_nzcv;
@@ -117,6 +117,7 @@ module top(
         .mem_read(mem_read),
         .byte_sel(byte_sel),
         .cond_met(cond_met),
+        .branch(branch),
         .instruction(instruction),
         .nzcv(prev_nzcv)
     ); 
@@ -180,7 +181,7 @@ module top(
         .rn(r_data1),
         .rm_dec(rm_dec),
         .s(s_or_u),
-        .Cin(nzcv[1]),
+        .Cin(prev_nzcv[1]),
         .en(alu_en),
         .instr_class(instr_class),
         .opcode(opcode),
