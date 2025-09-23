@@ -16,7 +16,7 @@ The assembler was implemented in Python, and the RTL model with verification tes
 - [x] ALU + ALUTop
 - [x] Main Control Unit
 - [x] Data Memory
-- [ ] Branching Unit
+- [x] Branching Unit
 
 # Performance
 
