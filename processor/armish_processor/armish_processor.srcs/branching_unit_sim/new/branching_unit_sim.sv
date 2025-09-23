@@ -36,7 +36,7 @@ class scoreboard;
     task check_test2(input logic [15:0] lr, input logic [15:0] out_pc, input logic [15:0] pc, input int i);
         logic [15:0] exp_lr, exp_out_pc;
         exp_lr = pc + 4;
-        exp_out_pc = pc + rb_stim[i];
+        exp_out_pc = pc + (rb_stim[i] << 2);
         if(lr == exp_lr && out_pc == exp_out_pc) $display("[PASS] Expected LR: %h | Expected Next PC: %h", exp_lr, exp_out_pc); 
         else $display("[FAIL] Expected LR: %h | Expected Out PC: %h | Actual LR: %h | Actual Out PC: %h", exp_lr, exp_out_pc, lr, out_pc); 
     endtask
@@ -44,7 +44,7 @@ class scoreboard;
     task check_test3(input logic [15:0] lr, input logic [15:0] out_pc, input logic [15:0] pc, input int i);
         logic [15:0] exp_lr, exp_out_pc;
         exp_lr = pc + 4;
-        exp_out_pc = pc + instr_offset_stim[i];
+        exp_out_pc = pc + (instr_offset_stim[i] << 2);
         if(lr == exp_lr && out_pc == exp_out_pc) $display("[PASS] Expected LR: %h | Expected Next PC: %h", exp_lr, exp_out_pc); 
         else $display("[FAIL] Expected LR: %h | Expected Out PC: %h | Actual LR: %h | Actual Out PC: %h", exp_lr, exp_out_pc, lr, out_pc); 
     endtask

@@ -95,7 +95,7 @@ module top(
     logic [15:0] lr, out_pc;
     logic [9:0] instr_offset;
     logic [15:0] rb;
-    logic r;
+    logic r, l;
 
     
 
@@ -162,6 +162,7 @@ module top(
         .clk(clk),
         .reset(reset)
         );
+    
 
 
     // op2dec
