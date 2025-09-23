@@ -31,18 +31,26 @@ module top(
     input logic load_done
     );
     program_state curr_state;
+
+    // WB Signals
+    logic [15:0] wb_alu_data1, wb_alu_data2;
+    logic [3:0] wb_w_reg1, wb_w_reg2;
+    logic [15:0] wb_mem_data, wb_out_pc, wb_lr;
+    logic wb_mem2reg, wb_reg_write1, wb_reg_write2;
     
 
     // Program Counter Signals
     logic [15:0] pc;
     logic [15:0] offset_nonbranching; 
     logic [15:0] pc_next;
+    logic update_pc;
     assign offset_nonbranching = 16'd4;
 
     pc_adder no_branch_adder(
         .pc_next(pc_next), 
-        .pc(pc), 
-        .offset(offset_nonbranching)
+        .pc(wb_out_pc), 
+        .offset(offset_nonbranching),
+        .update_pc(update_pc)
         );
     
     // Instruction Memory Signals
@@ -83,12 +91,13 @@ module top(
     logic Cin; 
     // data memory signals
     logic [15:0] mem_data;
+    // branching unit signals
+    logic [15:0] lr, out_pc;
+    logic [9:0] instr_offset;
+    logic [15:0] rb;
+    logic r;
 
-    // WB Signals
-    logic [15:0] wb_alu_data1, wb_alu_data2;
-    logic [3:0] wb_w_reg1, wb_w_reg2;
-    logic [15:0] wb_mem_data;
-    logic wb_mem2reg, wb_reg_write1, wb_reg_write2;
+    
 
 
 
@@ -143,8 +152,8 @@ module top(
         .r_reg4(r_reg4),
         .w_data1(w_data1),
         .w_data2(w_data2),
-        .w_data3(),
-        .w_data4(pc),
+        .w_data3(wb_lr),
+        .w_data4(wb_out_pc),
         .w_reg1(wb_w_reg1),
         .w_reg2(wb_w_reg2),
         .l(),
@@ -175,6 +184,19 @@ module top(
         .r_shift(r_shift),
         .shamt(shamt),
         .rs(rs)
+    );
+
+    assign instr_offset = instruction[9:0];
+    assign r = instruction[25];
+    branching_unit bu(
+        .lr(lr),
+        .out_pc(out_pc),
+        .pc_next(pc_next),
+        .pc(pc),
+        .instr_offset(instr_offset),
+        .rb(r_data2),
+        .r(r),
+        .branch(branch)
     );
 
     alu_top alt(
@@ -213,6 +235,8 @@ module top(
         .wb_mem2reg(wb_mem2reg),        //
         .wb_reg_write1(wb_reg_write1),  //
         .wb_reg_write2(wb_reg_write2),  //
+        .wb_out_pc(wb_out_pc),
+        .wb_lr(wb_lr),
 
         .alu_data1(alu_data1),
         .alu_data2(alu_data2),
@@ -222,6 +246,9 @@ module top(
         .mem2reg(mem2reg),
         .reg_write1(reg_write1),
         .reg_write2(reg_write2),
+        .out_pc(out_pc),
+        .lr(lr),
+        
 
         .clk(clk),
         .reset(reset)
@@ -231,6 +258,7 @@ module top(
     always_ff@(posedge clk) begin 
         if(reset) begin 
             curr_state <= IDLE;
+            update_pc <= 0;
             execute_done <= 1'b0;
             done <= 1'b1;
         end
@@ -238,6 +266,7 @@ module top(
             case(curr_state)
                 IDLE: begin 
                     done <= 1'b1;
+                    update_pc <= 0;
                     if(load_ready) begin 
                         curr_state <= LOAD_INSTR;
                     end
@@ -249,6 +278,7 @@ module top(
                     done <= 1'b0;
                     if(load_done) begin                 
                         curr_state <= EXECUTE_PROGRAM;
+                        update_pc <= 1;
                         pc <= 16'b0;
                     end
                     else begin 

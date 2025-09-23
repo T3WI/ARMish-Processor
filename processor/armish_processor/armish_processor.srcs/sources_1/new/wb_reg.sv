@@ -31,6 +31,8 @@ module wb_reg(
     output logic wb_mem2reg,
     output logic wb_reg_write1,
     output logic wb_reg_write2,
+    output logic [15:0] wb_out_pc,
+    output logic [15:0] wb_lr,
 
     input logic [15:0] alu_data1,
     input logic [15:0] alu_data2,
@@ -40,6 +42,8 @@ module wb_reg(
     input logic mem2reg,
     input logic reg_write1,
     input logic reg_write2,
+    input logic [15:0] out_pc,
+    input logic [15:0] lr,
 
     input logic clk,
     input logic reset
@@ -54,6 +58,8 @@ module wb_reg(
             wb_mem2reg <= 0;
             wb_reg_write1 <= 0;
             wb_reg_write2 <= 0;
+            wb_out_pc <= 0;
+            wb_lr <= 0;
         end
         else begin 
             wb_alu_data1 <= alu_data1;
@@ -64,6 +70,8 @@ module wb_reg(
             wb_mem2reg <= mem2reg;
             wb_reg_write1 <= reg_write1;
             wb_reg_write2 <= reg_write2;
+            wb_out_pc <= out_pc;
+            wb_lr <= lr;
         end
     end
 endmodule

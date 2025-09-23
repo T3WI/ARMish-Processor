@@ -31,9 +31,9 @@ module branching_unit(
     input logic branch
     );
     assign lr = pc_next;
-    
-    logic [15:0] pc_source;
+
+    logic [15:0] pc_source, new_pc;
     assign pc_source = r ? rb : instr_offset;
-    assign new_pc = pc + pc_source; 
+    assign new_pc = pc + (pc_source << 2); 
     assign out_pc = branch ? new_pc : pc_next;
 endmodule
