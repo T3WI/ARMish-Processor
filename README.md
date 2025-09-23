@@ -4,6 +4,11 @@ This project seeks to explore a subset of the ARM instruction set, and create an
 The assembler was implemented in Python, and the RTL model with verification testbenches were implemented using SystemVerilog.
 ![oops](images/datapath_nonpipelined.png)
 
+# Instructions
+1. In the assembler folder, run: ```python assembler.py file_name.s```. For example files, run ```python assembler.py .\asm_test_files\test_file.s```.
+2. Move ```out.bin``` from the assembler folder to the same simulator location as ```proceesor/armish_processor/armish_processor.sim/top_sim.sv```.
+3. Run simulation.
+
 # Progress
 - [x] ISA Design
 - [x] Assembler
@@ -16,7 +21,7 @@ The assembler was implemented in Python, and the RTL model with verification tes
 - [x] ALU + ALUTop
 - [x] Main Control Unit
 - [x] Data Memory
-- [ ] Branching Unit
+- [x] Branching Unit
 
 # Performance
 
