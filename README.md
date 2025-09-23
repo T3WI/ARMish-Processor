@@ -18,8 +18,6 @@ The assembler was implemented in Python, and the RTL model with verification tes
 - [x] Data Memory
 - [ ] Branching Unit
 
-# Verification
-
 # Performance
 
 # Known Issues
