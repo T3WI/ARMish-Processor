@@ -485,7 +485,7 @@ def conv_to_2s(value, bits):
 
 def find_branching_offset(label_address : int, lc : int):
     offset_int = (label_address - (lc + PIPELINE_CORRECTION)) // INSTRUCTION_SIZE
-    offset = conv_to_2s(offset_int, 24)
+    offset = conv_to_2s(offset_int, 10)
     return offset
 
 def parse_b(token, lc):
@@ -517,7 +517,7 @@ def parse_b(token, lc):
             R = '0'
             L = '0'
             label_address = symbols[token[3]]
-            offset = find_branching_offset(label_address, lc)
+            offset = '0'*14 + find_branching_offset(label_address, lc)
             
             
 
@@ -525,7 +525,7 @@ def parse_b(token, lc):
             R = '0'
             L = '1'
             label_address = symbols[token[3]]
-            offset = find_branching_offset(label_address, lc)
+            offset = '0'*14 + find_branching_offset(label_address, lc)
         case _:
             R = 'X'
             L = 'X'

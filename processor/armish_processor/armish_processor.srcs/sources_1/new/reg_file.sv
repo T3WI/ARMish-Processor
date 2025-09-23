@@ -31,10 +31,13 @@ module reg_file(
     input logic [3:0] r_reg4,
     input logic [15:0] w_data1,
     input logic [15:0] w_data2,
+    input logic [15:0] w_data3,         // lr
+    input logic [15:0] w_data4,         // pc
     input logic [3:0] w_reg1,           
-    input logic [3:0] w_reg2,           
+    input logic [3:0] w_reg2,          
     input logic reg_write1,
     input logic reg_write2,
+    input logic l,
     input logic clk,
     input logic reset
     );
@@ -55,6 +58,8 @@ module reg_file(
             if(reg_write2 == 1 && w_reg2 != 0 && w_reg2 != w_reg1) begin           // if w_reg1 and w_reg2 are the same (writing to the same register), don't execute the second write 
                 register_file[w_reg2] <= w_data2;
             end
+            if(l) register_file[14] <= w_data3;
+            register_file[15] <= w_data4;
         end
     end
     
