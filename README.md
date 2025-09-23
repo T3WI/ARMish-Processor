@@ -21,7 +21,7 @@ The assembler was implemented in Python, and the RTL model with verification tes
 # Performance
 
 # Known Issues
-- Reading from the register file after a LDR instruction will not use the correct value due to the lack of stalling hardware. For now, calling addx-al r0, r0, #0 or something similar after the ldr instruction will make it work.
+- After a LDR instruction trying to read what was loaded will not use the correct value due to the lack of stalling hardware. For now, calling addx-al r0, r0, #0 or something similar after the ldr instruction will make it work.
 
 # Future Work
 - Pipelining with Hazard Control
