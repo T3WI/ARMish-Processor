@@ -1,2 +1,8 @@
 processor/vivado/*
 assembler/out.*
+docs/*
+!docs/armish.pdf
+assembler/test_immediates.s
+assembler/asm_test_files/test_program_??.s
+assembler/asm_test_files/test_immediates.s
+processor/armish_processor/*
