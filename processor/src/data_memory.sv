@@ -13,6 +13,9 @@ module data_memory(
     mem_loc_t data_mem[0:255];           // 1 bit valid, 16 bits data
     logic [15:0] output_data;
 
+    initial begin
+        $readmemh("datamem.hex", data_mem);
+    end
     // top level read logic
     always_ff @(posedge clk) begin 
         if(reset) begin 

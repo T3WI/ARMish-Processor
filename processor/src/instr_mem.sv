@@ -30,6 +30,10 @@ module instr_mem(
 );
     logic [31:0] instruction_memory [0:1023];
 
+    initial begin 
+        $readmemh("out.hex", instruction_memory);
+    end
+
     // Synchronous write only
     always_ff @(posedge clk) begin
         if (w_e) begin
