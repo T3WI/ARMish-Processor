@@ -20,297 +20,287 @@
 //////////////////////////////////////////////////////////////////////////////////
 import cpu_pkg::*;
 module top(
-    output logic done,
-    output logic execute_done,
-    input logic [9:0] instrmem_w_address,
-    input logic [31:0] instrmem_w_instruction,
-    input logic instrmem_we,
-    input logic clk,              // clock 
-    input logic reset,             // synchronous reset
-    input logic load_ready,
-    input logic load_done
+    output logic [31:0] debug_instruction,
+    output control_bus debug_cb,            // debug signal for ID
+    output logic [15:0] debug_data1,
+    output logic [15:0] debug_memdata1,
+    input logic CLK,              // clock 
+    input logic RESETN             // synchronous reset
     );
-    program_state curr_state;
 
-    // WB Signals
-    logic [15:0] wb_alu_data1, wb_alu_data2;
-    logic [3:0] wb_w_reg1, wb_w_reg2;
-    logic [15:0] wb_mem_data, wb_out_pc, wb_lr;
-    logic wb_mem2reg, wb_reg_write1, wb_reg_write2;
-    
+    //--------------------------------------------------------------------------
+    // INSTRUCTION FETCH
+    logic [15:0] pc_next, pc;
+    localparam OFFSET_NONBRANCHING = 16'd4;
 
-    // Program Counter Signals
-    logic [15:0] pc;
-    logic [15:0] offset_nonbranching; 
-    logic [15:0] pc_next;
     logic update_pc;
-    assign offset_nonbranching = 16'd4;
+    assign update_pc = 1'b1;    // TEMPORARY
+    logic [15:0] exdm_outpc;
 
-    pc_adder no_branch_adder(
-        .pc_next(pc_next), 
-        .pc(wb_out_pc), 
-        .offset(offset_nonbranching),
+    pc_adder pca(
+        .pc_next(pc_next),       
+        .pc(pc),
+        .offset(OFFSET_NONBRANCHING),
         .update_pc(update_pc)
-        );
-    
-    // Instruction Memory Signals
+    );
+
+    always_ff@(posedge CLK) begin 
+        if(!RESETN) begin 
+            pc <= 16'b0;
+        end
+        else if(exdm_cb.branch) begin 
+            pc <= exdm_outpc;
+        end
+        else begin 
+            pc <= pc_next;
+        end
+    end
+
     logic [31:0] instruction;
     instr_mem im(
-        .instruction(instruction), 
-        .r_address(pc), 
-        .w_instruction(instrmem_w_instruction), 
-        .w_address(instrmem_w_address), 
-        .w_e(instrmem_we), 
-        .clk(clk)
-        );
-    //****************************************************************************************************************//
-    // Control Unit Signals
-    logic reg_write1, reg_write2, mem_write, mem_read, mem2reg;
-    logic [1:0] byte_sel;
-    logic i, s_or_u, alu_en, cond_met, branch;       
-    instr_t instr_class;
-    operation_t opcode; 
-    logic [3:0] nzcv, prev_nzcv;
-    // Register File Signals
-    logic [3:0]     r_reg1, r_reg2, r_reg3, r_reg4;
-    logic [15:0]    r_data1, r_data2, r_data3, r_data4;
-    logic [3:0]     w_reg1, w_reg2;
-    logic [15:0]    w_data1, w_data2;
-    logic[15:0]     alu_data1, alu_data2;
-    // op2_decode Signals
-    logic [15:0] rm_dec;
-    logic [7:0] imm_m;
-    logic [3:0] rot_m;
-    logic [15:0] rm;
-    logic [1:0] shtype;
-    logic r_shift;
-    logic [3:0] shamt;
-    logic [15:0] rs;
-    // alu top signals
-    logic [15:0] rn;
-    logic Cin; 
-    // data memory signals
-    logic [15:0] mem_data;
-    // branching unit signals
-    logic [15:0] lr, out_pc;
-    logic [9:0] instr_offset;
-    logic [15:0] rb;
-    logic r, l;
+        .instruction(instruction),
+        .r_address(pc)
+    );
 
+    logic [31:0] ifid_instruction;
+    logic [15:0] ifid_pcnext, ifid_pc;
+    IFID_reg ifid(
+        .ifid_instruction(ifid_instruction),
+        .ifid_pc_next(ifid_pcnext),
+        .ifid_pc(ifid_pc),
+        .instruction(instruction),
+        .pc_next(pc_next),
+        .pc(pc),
+        .clk(CLK),
+        .resetn(RESETN)
+    );
     
+    //--------------------------------------------------------------------------
+    // INSTRUCTION DECODE
+    // Signals from later stages
+    logic [3:0] nzcv, prev_nzcv;
+    logic [15:0] exdm_lr;
 
-
-
-
-    // nzcv flag update
-    always_ff @(posedge clk) begin 
-        if(reset) begin 
-            prev_nzcv <= 0;
+    always_ff @(posedge CLK) begin 
+        if(!RESETN) begin 
+            prev_nzcv <= 4'b0;
         end
         else begin 
             prev_nzcv <= nzcv;
         end
     end
-    
 
-    main_control mcu(
-        .reg_write1(reg_write1),
-        .reg_write2(reg_write2),
-        .mem_write(mem_write),          
-        .mem2reg(mem2reg),              // unused until data mem is implemented
-        .i(i),
-        .s_or_u(s_or_u),
-        .instr_class(instr_class),
-        .opcode(opcode),
-        .alu_en(alu_en),
-        .mem_read(mem_read),
-        .byte_sel(byte_sel),
-        .cond_met(cond_met),
-        .branch(branch),
-        .instruction(instruction),
-        .nzcv(prev_nzcv)
-    ); 
+    // Signals for this stage
+    instruction_bus ib;
+    assign ib = instruction_bus'(ifid_instruction);
+    r_data rdata;
+    // WB signals
+    logic [15:0] dmwb_aludata1, dmwb_aludata2;
+    logic [15:0] dmwb_memdata;
+    instruction_bus dmwb_ib;
+    control_bus dmwb_cb;
 
-    // Register file input logic 
-    assign r_reg1 = instruction[19:16];         // Rn
-    assign r_reg2 = instruction[3:0];           // Rm
-    assign r_reg3 = instruction[9:6];           // Rs
-    assign r_reg4 = instruction[15:12];
-    assign w_reg1 = instruction[15:12];         // Rd1
-    assign w_reg2 = instruction[11:8];              // Rd2
+    logic [15:0] w_data1;
+    assign w_data1 = dmwb_cb.mem2reg ? dmwb_memdata : dmwb_aludata1;
 
-    assign w_data1 = wb_mem2reg ? mem_data : wb_alu_data1;      // change to wb_mem_data later?
-    assign w_data2 = wb_alu_data2;
     reg_file rf(
-        .r_data1(r_data1), 
-        .r_data2(r_data2), 
-        .r_data3(r_data3), 
-        .r_data4(r_data4),
-        .r_reg1(r_reg1), 
-        .r_reg2(r_reg2), 
-        .r_reg3(r_reg3),
-        .r_reg4(r_reg4),
-        .w_data1(w_data1),
-        .w_data2(w_data2),
-        .w_data3(wb_lr),
-        .w_data4(wb_out_pc),
-        .w_reg1(wb_w_reg1),
-        .w_reg2(wb_w_reg2),
+        .r_data1(rdata.rn),
+        .r_data2(rdata.rm),
+        .r_data3(rdata.rs),
+        .r_data4(rdata.rt),
+        .r_reg1(ib.rn),
+        .r_reg2(ib.op2[3:0]),
+        .r_reg3(ib.op2[9:6]),
+        .r_reg4(ib.rdt),
+        .w_data1(w_data1),    // need to modify so that it takes in alu data or dm data
+        .w_data2(dmwb_aludata2),
+        .w_data3(ifid_pc),
+        .w_data4(exdm_lr),
+        .w_reg1(dmwb_ib.rdt),
+        .w_reg2(dmwb_ib.op2[11:8]),
+        .reg_write1(dmwb_cb.reg_write1),
+        .reg_write2(dmwb_cb.reg_write2),
         .l(),
-        .reg_write1(wb_reg_write1),                      
-        .reg_write2(wb_reg_write2),
-        .clk(clk),
-        .reset(reset)
-        );
-    
-
-
-    // op2dec
-    assign imm_m = instruction[7:0];
-    assign rot_m = instruction[11:8];
-    assign rm = r_data2;
-
-    assign shtype = instruction[11:10];
-    assign r_shift = instruction[4];
-    assign shamt = instruction[9:6];
-    assign rs = r_data3;
-
-    op2_decode o2d(
-        .rm_dec(rm_dec),
-        .imm_m(imm_m),
-        .rot_m(rot_m),
-        .rm(rm),
-        .i(i),
-        .shtype(shtype),
-        .r_shift(r_shift),
-        .shamt(shamt),
-        .rs(rs)
+        .clk(CLK),
+        .reset(RESETN)
     );
 
-    assign instr_offset = instruction[9:0];
-    assign r = instruction[25];
+    control_bus cb;
+    main_control mcu(
+        .cb(cb),
+        .ib(ib),
+        .nzcv(nzcv)
+    );
+
+    logic [15:0] idop2_Rn, idop2_Rm, idop2_Rs, idop2_Rt;
+    instruction_bus idop2_ib;
+    control_bus idop2_cb;
+    logic [15:0] idop2_pcnext, idop2_pc;
+    IDOP2_reg idop2(
+        .idop2_ib(idop2_ib),
+        .idop2_r_data1(idop2_Rn),
+        .idop2_r_data2(idop2_Rm),
+        .idop2_r_data3(idop2_Rs),
+        .idop2_r_data4(idop2_Rt),
+        .idop2_cb(idop2_cb),
+        .idop2_pcnext(idop2_pcnext),
+        .idop2_pc(idop2_pc),
+        .ib(ib),
+        .r_data1(rdata.rn),
+        .r_data2(rdata.rm),
+        .r_data3(rdata.rs),
+        .r_data4(rdata.rt),
+        .cb(cb),
+        .pc_next(ifid_pcnext),
+        .pc(ifid_pc),
+        .clk(CLK),
+        .resetn(RESETN)
+    );
+    //--------------------------------------------------------------------------
+    // OP2 DECODE
+    logic [15:0] rm_dec;
+    op2_decode op2d(
+        .rm_dec(rm_dec),
+        .imm_m(idop2_ib.op2[7:0]),
+        .rot_m(idop2_ib.op2[11:8]),
+        .rm(idop2_Rm),
+        .i(idop2_cb.i),
+        .shtype(idop2_ib.op2[11:10]),
+        .r_shift(idop2_ib.op2[4]),
+        .shamt(idop2_ib.op2[9:6]),
+        .rs(idop2_Rs)
+    );
+
+    instruction_bus op2ex_ib;
+    control_bus op2ex_cb;
+    logic [15:0] op2ex_Rmdec, op2ex_Rn; 
+    logic [15:0] op2ex_Rm, op2ex_Rt;
+    logic [15:0] op2ex_pc, op2ex_pcnext;
+    OP2EX_reg op2ex(
+        .op2ex_ib(op2ex_ib),
+        .op2ex_cb(op2ex_cb),
+        .op2ex_rmdec(op2ex_Rmdec),
+        .op2ex_rn(op2ex_Rn),
+        .op2ex_pcnext(op2ex_pcnext),
+        .op2ex_pc(op2ex_pc),
+        .op2ex_rm(op2ex_Rm),
+        .op2ex_rt(op2ex_Rt),
+        .ib(idop2_ib),
+        .cb(idop2_cb),
+        .rm_dec(rm_dec),
+        .rn(idop2_Rn),
+        .pc_next(idop2_pcnext),
+        .pc(idop2_pc),
+        .rm(idop2_Rm),
+        .rt(idop2_Rt),
+        .clk(CLK),
+        .resetn(RESETN)
+    );
+    //--------------------------------------------------------------------------
+    // EXECUTE
+    logic [15:0] alu_data1, alu_data2;
+    alu_top alt(
+        .w_data1(alu_data1),
+        .w_data2(alu_data2),
+        .nzcv(nzcv),
+        .rn(op2ex_Rn),
+        .rm_dec(op2ex_Rmdec),
+        .s(op2ex_cb.s_or_u),
+        .Cin(prev_nzcv[1]),
+        .en(op2ex_cb.alu_en),
+        .instr_class(op2ex_cb.instr_class),
+        .opcode(op2ex_cb.opcode),
+        .u(op2ex_cb.s_or_u)
+    );
+
+    logic [15:0] lr;
+    logic [15:0] out_pc;
+    logic signed [15:0] offset_branching;
     branching_unit bu(
         .lr(lr),
         .out_pc(out_pc),
-        .pc_next(pc_next),
-        .pc(pc),
-        .instr_offset(instr_offset),
-        .rb(r_data2),
-        .r(r),
-        .branch(branch)
+        .pc_next(op2ex_pcnext),
+        .pc(op2ex_pc),
+        .instr_offset(op2ex_ib.op2[9:0]),
+        .rb(op2ex_Rm),
+        .r(op2ex_ib.opcode[3]),
+        .branch(op2ex_cb.branch)
     );
 
-    alu_top alt(
-        .w_data1(alu_data1), 
-        .w_data2(alu_data2),
-        .nzcv(nzcv),
-        .rn(r_data1),
-        .rm_dec(rm_dec),
-        .s(s_or_u),
-        .Cin(prev_nzcv[1]),
-        .en(alu_en),
-        .instr_class(instr_class),
-        .opcode(opcode),
-        .u(s_or_u)
-    );
-
-    
-    data_memory dm(
-        .r_data(mem_data),              
-        .w_data(r_data4),                          
-        .addr(alu_data1),
-        .mem_write(mem_write),
-        .mem_read(mem_read),
-        .byte_sel(byte_sel),
-        .clk(clk),
-        .reset(reset)
-    );
-
-    
-    wb_reg wb(
-        .wb_alu_data1(wb_alu_data1),    //
-        .wb_alu_data2(wb_alu_data2),    //
-        .wb_w_reg1(wb_w_reg1),          //
-        .wb_w_reg2(wb_w_reg2),          //
-        .wb_mem_data(wb_mem_data),      //
-        .wb_mem2reg(wb_mem2reg),        //
-        .wb_reg_write1(wb_reg_write1),  //
-        .wb_reg_write2(wb_reg_write2),  //
-        .wb_out_pc(wb_out_pc),
-        .wb_lr(wb_lr),
-
+    logic [15:0] exdm_aludata1, exdm_aludata2;
+    logic [15:0] exdm_Rt;
+    instruction_bus exdm_ib;
+    control_bus exdm_cb;
+    EXDM_reg exdm(
+        .exdm_aludata1(exdm_aludata1),
+        .exdm_aludata2(exdm_aludata2),
+        .exdm_outpc(exdm_outpc),
+        .exdm_ib(exdm_ib),
+        .exdm_cb(exdm_cb),
+        .exdm_rt(exdm_Rt),
+        .exdm_lr(exdm_lr),
+        .ib(op2ex_ib),
+        .cb(op2ex_cb),
         .alu_data1(alu_data1),
         .alu_data2(alu_data2),
-        .w_reg1(w_reg1),
-        .w_reg2(w_reg2),
-        .mem_data(mem_data),
-        .mem2reg(mem2reg),
-        .reg_write1(reg_write1),
-        .reg_write2(reg_write2),
         .out_pc(out_pc),
+        .rt(op2ex_Rt),
         .lr(lr),
-        
-
-        .clk(clk),
-        .reset(reset)
+        .clk(CLK),
+        .resetn(RESETN)
+    );
+    //--------------------------------------------------------------------------
+    // DATA MEMORY
+    
+    logic [15:0] mem_data;
+    data_memory dm(
+        .r_data(mem_data),
+        .w_data(exdm_Rt),
+        .addr(exdm_aludata1),
+        .mem_write(exdm_cb.mem_write),
+        .mem_read(exdm_cb.mem_read),
+        .byte_sel(exdm_cb.byte_sel),
+        .clk(CLK),
+        .reset(1'b1)    // permanently set to 1, so the memory won't get replaced during reset
+    );
+    // WAIT FOR DM
+    instruction_bus w4d_ib; 
+    control_bus w4d_cb;
+    logic [15:0] w4d_aludata1, w4d_aludata2;
+    WAIT4DM_reg w4d(
+        .w4d_ib(w4d_ib),
+        .w4d_cb(w4d_cb),
+        .w4d_aludata1(w4d_aludata1),
+        .w4d_aludata2(w4d_aludata2),
+        .ib(exdm_ib),
+        .cb(exdm_cb),
+        .alu_data1(exdm_aludata1),
+        .alu_data2(exdm_aludata2),
+        .clk(CLK),
+        .resetn(RESETN)
     );
 
+    // TODO: signals for aludata1, aludata2, cb, and ib enter DM, but it takes
+    // 2 cycles to take out mem_data from data memory. 
+    DMWB_reg dmwb(
+        .dmwb_ib(dmwb_ib),
+        .dmwb_cb(dmwb_cb),
+        .dmwb_aludata1(dmwb_aludata1),
+        .dmwb_aludata2(dmwb_aludata2),
+        .dmwb_memdata(dmwb_memdata),
+        .ib(w4d_ib),
+        .cb(w4d_cb),
+        .alu_data1(w4d_aludata1),
+        .alu_data2(w4d_aludata2),
+        .mem_data(mem_data),
+        .clk(CLK),
+        .resetn(RESETN)
+    );
+    //--------------------------------------------------------------------------
+    // DEBUG SIGNALS
+    assign debug_instruction = ifid_instruction;
+    assign debug_data1 = exdm_aludata1;
+    assign debug_memdata1 = dmwb_memdata;
+    assign debug_cb = dmwb_cb;
     
-    always_ff@(posedge clk) begin 
-        if(reset) begin 
-            curr_state <= IDLE;
-            update_pc <= 0;
-            execute_done <= 1'b0;
-            done <= 1'b1;
-        end
-        else begin 
-            case(curr_state)
-                IDLE: begin 
-                    done <= 1'b1;
-                    update_pc <= 0;
-                    if(load_ready) begin 
-                        curr_state <= LOAD_INSTR;
-                    end
-                    else begin 
-                        curr_state <= IDLE;
-                    end
-                end
-                LOAD_INSTR: begin 
-                    done <= 1'b0;
-                    if(load_done) begin                 
-                        curr_state <= EXECUTE_PROGRAM;
-                        update_pc <= 1;
-                        pc <= 16'b0;
-                    end
-                    else begin 
-                        curr_state <= LOAD_INSTR;   
-                    end
-                end
-                EXECUTE_PROGRAM: begin 
-                    done <= 1'b0;
-                    if(execute_done) begin 
-                        curr_state <= IDLE;
-                    end 
-                    else begin 
-                        if(cond_t'(instruction[31:28]) == HALT) begin // STOP PROGRAM
-                            execute_done <= 1'b1;
-                        end
-                        curr_state <= EXECUTE_PROGRAM;
-                        pc <= pc_next;
-                    end
-                end
-                default: begin
-                    done <= 1'b1;
-                    curr_state <= IDLE; 
-                end
-            endcase
-        end
-    end
 endmodule
-
-
-
-
-
-
-

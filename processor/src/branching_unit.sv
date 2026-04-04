@@ -22,7 +22,7 @@
 
 module branching_unit(
     output logic [15:0] lr,
-    output logic [15:0] out_pc,
+    output logic signed [15:0] out_pc,
     input logic [15:0] pc_next,
     input logic [15:0] pc,
     input logic [9:0] instr_offset,
@@ -33,7 +33,7 @@ module branching_unit(
     assign lr = pc_next;
 
     logic [15:0] pc_source, new_pc;
-    assign pc_source = r ? rb : instr_offset;
-    assign new_pc = pc + (pc_source << 2); 
+    assign pc_source = r ? rb : { {6{instr_offset[9]}}, instr_offset};
+    assign new_pc = pc_next + (pc_source << 2); 
     assign out_pc = branch ? new_pc : pc_next;
 endmodule

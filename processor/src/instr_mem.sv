@@ -22,23 +22,12 @@
 
 module instr_mem(
     output logic [31:0] instruction,
-    input  logic        clk,
-    input  logic [15:0] r_address,
-    input  logic [31:0]  w_instruction,
-    input  logic [9:0]   w_address,
-    input  logic        w_e
+    input logic [15:0] r_address
 );
     logic [31:0] instruction_memory [0:1023];
-
+    
     initial begin 
         $readmemh("out.hex", instruction_memory);
-    end
-
-    // Synchronous write only
-    always_ff @(posedge clk) begin
-        if (w_e) begin
-            instruction_memory[w_address] <= w_instruction;
-        end
     end
 
     // Asynchronous read

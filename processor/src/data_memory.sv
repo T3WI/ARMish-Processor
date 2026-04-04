@@ -8,9 +8,8 @@ module data_memory(
     input logic clk,
     input logic reset
     );
-    import cpu_pkg::mem_loc_t;
     parameter MEM_SIZE = 256;
-    mem_loc_t data_mem[0:255];           // 1 bit valid, 16 bits data
+    logic [7:0] data_mem[0:255];           // 1 bit valid, 16 bits data
     logic [15:0] output_data;
 
     initial begin
@@ -18,11 +17,10 @@ module data_memory(
     end
     // top level read logic
     always_ff @(posedge clk) begin 
-        if(reset) begin 
+        if(!reset) begin 
             r_data <= 16'b0;
             for(int i = 0; i < MEM_SIZE; i++) begin 
-                data_mem[i].data <= 0;
-                data_mem[i].valid <= 0;
+                data_mem[i] <= 0;
             end
         end
         else begin 
@@ -41,20 +39,16 @@ module data_memory(
             case(byte_sel) 
             2'b11: 
             begin 
-                data_mem[addr].data <= w_data[15:8];
-                data_mem[addr+1].data <= w_data[7:0];
-                data_mem[addr].valid <= 1;
-                data_mem[addr+1].valid <= 1;
+                data_mem[addr] <= w_data[15:8];
+                data_mem[addr+1] <= w_data[7:0];
             end
             2'b10:
             begin 
-                data_mem[addr].data <= w_data[15:8];
-                data_mem[addr].valid <= 1;
+                data_mem[addr] <= w_data[15:8];
             end
             2'b01:
             begin 
-                data_mem[addr].data <= w_data[7:0];
-                data_mem[addr].valid <= 1;
+                data_mem[addr] <= w_data[7:0];
             end
             default: 
             begin 
@@ -64,26 +58,23 @@ module data_memory(
     end
 
     // read logic
-    logic v1, v2;
-    assign v1 = data_mem[addr].valid;
-    assign v2 = data_mem[addr+1].valid;
     always_comb begin
         if(mem_read) begin 
             case(byte_sel)
                 2'b11:
                 begin
-                    output_data[15:8] = v1 ? data_mem[addr].data : 8'hff;
-                    output_data[7:0] = v2 ? data_mem[addr+1].data : 8'hff; 
+                    output_data[15:8] = data_mem[addr];
+                    output_data[7:0] = data_mem[addr+1]; 
                 end
                 2'b10:
                 begin 
-                    output_data[15:8] = v1 ? data_mem[addr].data : 8'hff;
+                    output_data[15:8] = data_mem[addr];
                     output_data[7:0] = 8'h00;
                 end
                 2'b01:
                 begin 
                     output_data[15:8] = 8'h00;
-                    output_data[7:0] = v1 ? data_mem[addr].data : 8'hff;
+                    output_data[7:0] = data_mem[addr];
                 end
                 default: 
                 begin 

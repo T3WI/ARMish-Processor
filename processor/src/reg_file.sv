@@ -24,7 +24,7 @@ module reg_file(
     output logic [15:0] r_data1,        // rn
     output logic [15:0] r_data2,        // rm
     output logic [15:0] r_data3,        // rs
-    output logic [15:0] r_data4,        // rt
+    output logic [15:0] r_data4,        // rt (used for str instructions)
     input logic [3:0] r_reg1,           
     input logic [3:0] r_reg2,           
     input logic [3:0] r_reg3,           
@@ -37,7 +37,7 @@ module reg_file(
     input logic [3:0] w_reg2,          
     input logic reg_write1,
     input logic reg_write2,
-    input logic l,
+    input logic l,                      // update link register
     input logic clk,
     input logic reset
     );
@@ -46,7 +46,7 @@ module reg_file(
 
     // Write logic
     always_ff @(posedge clk) begin
-        if(reset) begin 
+        if(!reset) begin 
             for(int i = 0; i < 16; i++) begin 
                 register_file[i] <= 16'b0;
             end
