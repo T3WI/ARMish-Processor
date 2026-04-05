@@ -8,6 +8,8 @@ module IFID_reg(
     input logic [31:0] instruction,
     input logic [15:0] pc_next,
     input logic [15:0] pc,
+    // control
+    input logic stall,
 
     // global signals
     input logic clk,
@@ -16,8 +18,13 @@ module IFID_reg(
     always_ff@(posedge clk) begin 
         if(!resetn) begin 
             ifid_instruction <= 32'b0;
-            ifid_pc_next <= 32'b0;
+            ifid_pc_next <= 0;
             ifid_pc <= 0;
+        end
+        else if(stall) begin
+            ifid_instruction <= ifid_instruction;
+            ifid_pc_next <= ifid_pc_next;
+            ifid_pc <= ifid_pc; 
         end
         else begin 
             ifid_instruction <= instruction;

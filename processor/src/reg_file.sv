@@ -44,8 +44,8 @@ module reg_file(
 
     logic [15:0] register_file[0:15];
 
-    // Write logic
-    always_ff @(posedge clk) begin
+    // Write logic (negedge clock to do read after write)
+    always_ff @(negedge clk) begin
         if(!reset) begin 
             for(int i = 0; i < 16; i++) begin 
                 register_file[i] <= 16'b0;

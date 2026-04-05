@@ -19,9 +19,6 @@ module data_memory(
     always_ff @(posedge clk) begin 
         if(!reset) begin 
             r_data <= 16'b0;
-            for(int i = 0; i < MEM_SIZE; i++) begin 
-                data_mem[i] <= 0;
-            end
         end
         else begin 
             if (mem_read) begin 

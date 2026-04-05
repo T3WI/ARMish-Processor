@@ -33,8 +33,9 @@ module top(
     logic [15:0] pc_next, pc;
     localparam OFFSET_NONBRANCHING = 16'd4;
 
+    logic stall;
     logic update_pc;
-    assign update_pc = 1'b1;    // TEMPORARY
+    assign update_pc = ~stall;    // TEMPORARY
     logic [15:0] exdm_outpc;
 
     pc_adder pca(
@@ -69,6 +70,7 @@ module top(
         .ifid_pc_next(ifid_pcnext),
         .ifid_pc(ifid_pc),
         .instruction(instruction),
+        .stall(stall),
         .pc_next(pc_next),
         .pc(pc),
         .clk(CLK),
@@ -76,7 +78,7 @@ module top(
     );
     
     //--------------------------------------------------------------------------
-    // INSTRUCTION DECODE
+    // INSTRUCTION DECODE - TODO: hazard stuff
     // Signals from later stages
     logic [3:0] nzcv, prev_nzcv;
     logic [15:0] exdm_lr;
@@ -129,7 +131,24 @@ module top(
     main_control mcu(
         .cb(cb),
         .ib(ib),
+        .stall(stall),
         .nzcv(nzcv)
+    );
+
+    hazard_detection_unit hdu(
+        .stall(stall),
+        .ID_Rn(ib.rn),
+        .ID_Rm(ib.op2[3:0]),
+        .ID_usesRn(cb.uses_rn),
+        .ID_usesRm(cb.uses_rm),
+        .OP2_Rd(idop2_ib.rdt),
+        .EX_Rd(op2ex_ib.rdt),
+        .DM_Rd(exdm_ib.rdt),
+        .WB_Rd(dmwb_ib.rdt),
+        .OP2_regwrite1(idop2_cb.reg_write1),
+        .EX_regwrite1(op2ex_cb.reg_write1),
+        .DM_regwrite1(exdm_cb.reg_write1),
+        .WB_regwrite1(dmwb_cb.reg_write1)
     );
 
     logic [15:0] idop2_Rn, idop2_Rm, idop2_Rs, idop2_Rt;
@@ -158,6 +177,8 @@ module top(
     );
     //--------------------------------------------------------------------------
     // OP2 DECODE
+    
+
     logic [15:0] rm_dec;
     op2_decode op2d(
         .rm_dec(rm_dec),
