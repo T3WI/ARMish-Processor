@@ -3,7 +3,7 @@ This project explores a custom implementation of a subset of the ARMv4 instructi
 
 The assembler is implemented in Python, and the RTL model is implemented using SystemVerilog, using an Arty-S7 25 as a target hardware to use as an example.
 
-\textbf{This architecture is an educational project inspired by ARM-style RISC design using the ARM7TDMI-S data sheet as a reference. It is not ARM-compatible and does not use proprietary ARM encoding or IP. }
+This architecture is an educational project inspired by ARM-style RISC design using the ARM7TDMI-S data sheet as a reference. It is not ARM-compatible and does not use proprietary ARM encoding or IP. 
 ![oops](images/datapath_nonpipelined.png)
 
 # Instructions
