@@ -198,7 +198,7 @@ module top(
         .rs(idop2_Rs)
     );
 
-    // TODO: Branching unit doesn't seem to be working, try doing it in OP2 stage, will need to stall execution of later instructions
+    // TODO: Branching unit doesn't seem to be working. Note that branch depends on nzcv, which is found in EX stage
     logic [15:0] lr;
     logic [15:0] out_pc;
     logic signed [15:0] offset_branching;
