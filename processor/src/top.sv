@@ -78,7 +78,7 @@ module top(
     );
     
     //--------------------------------------------------------------------------
-    // INSTRUCTION DECODE - TODO: hazard stuff
+    // INSTRUCTION DECODE 
     // Signals from later stages
     logic [3:0] nzcv, prev_nzcv;
     logic [15:0] exdm_lr;
@@ -126,6 +126,7 @@ module top(
         .clk(CLK),
         .reset(RESETN)
     );
+    
 
     control_bus cb;
     main_control mcu(
@@ -139,17 +140,24 @@ module top(
         .stall(stall),
         .ID_Rn(ib.rn),
         .ID_Rm(ib.op2[3:0]),
-        .ID_usesRn(cb.uses_rn),
-        .ID_usesRm(cb.uses_rm),
         .OP2_Rd(idop2_ib.rdt),
         .EX_Rd(op2ex_ib.rdt),
         .DM_Rd(exdm_ib.rdt),
+        .W4D_Rd(w4d_ib.rdt),
         .WB_Rd(dmwb_ib.rdt),
+        .OP2_memread(idop2_cb.mem_read),
+        .EX_memread(op2ex_cb.mem_read),
+        .DM_memread(exdm_cb.mem_read),
+        .W4D_memread(w4d_cb.mem_read),
+        .WB_memread(dmwb_cb.mem_read),
         .OP2_regwrite1(idop2_cb.reg_write1),
         .EX_regwrite1(op2ex_cb.reg_write1),
         .DM_regwrite1(exdm_cb.reg_write1),
+        .W4D_regwrite1(w4d_cb.reg_write1),
         .WB_regwrite1(dmwb_cb.reg_write1)
     );
+
+    
 
     logic [15:0] idop2_Rn, idop2_Rm, idop2_Rs, idop2_Rt;
     instruction_bus idop2_ib;
@@ -177,8 +185,6 @@ module top(
     );
     //--------------------------------------------------------------------------
     // OP2 DECODE
-    
-
     logic [15:0] rm_dec;
     op2_decode op2d(
         .rm_dec(rm_dec),
@@ -190,6 +196,21 @@ module top(
         .r_shift(idop2_ib.op2[4]),
         .shamt(idop2_ib.op2[9:6]),
         .rs(idop2_Rs)
+    );
+
+    // TODO: Branching unit doesn't seem to be working, try doing it in OP2 stage, will need to stall execution of later instructions
+    logic [15:0] lr;
+    logic [15:0] out_pc;
+    logic signed [15:0] offset_branching;
+    branching_unit bu(
+        .lr(lr),
+        .out_pc(out_pc),
+        .pc_next(idop2_pcnext),
+        .pc(idop2_pc),
+        .instr_offset(idop2_ib.op2[9:0]),
+        .rb(idop2_ib.op2[3:0]),
+        .r(idop2_ib.opcode[3]),
+        .branch(idop2_cb.branch)
     );
 
     instruction_bus op2ex_ib;
@@ -219,13 +240,14 @@ module top(
     );
     //--------------------------------------------------------------------------
     // EXECUTE
+    // TODO: Forwarding logic
     logic [15:0] alu_data1, alu_data2;
     alu_top alt(
         .w_data1(alu_data1),
         .w_data2(alu_data2),
         .nzcv(nzcv),
         .rn(op2ex_Rn),
-        .rm_dec(op2ex_Rmdec),
+        .rm_dec(op2ex_Rmdec), // also has the Rm data if originating for register
         .s(op2ex_cb.s_or_u),
         .Cin(prev_nzcv[1]),
         .en(op2ex_cb.alu_en),
@@ -234,19 +256,7 @@ module top(
         .u(op2ex_cb.s_or_u)
     );
 
-    logic [15:0] lr;
-    logic [15:0] out_pc;
-    logic signed [15:0] offset_branching;
-    branching_unit bu(
-        .lr(lr),
-        .out_pc(out_pc),
-        .pc_next(op2ex_pcnext),
-        .pc(op2ex_pc),
-        .instr_offset(op2ex_ib.op2[9:0]),
-        .rb(op2ex_Rm),
-        .r(op2ex_ib.opcode[3]),
-        .branch(op2ex_cb.branch)
-    );
+    
 
     logic [15:0] exdm_aludata1, exdm_aludata2;
     logic [15:0] exdm_Rt;

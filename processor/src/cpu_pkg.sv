@@ -55,8 +55,6 @@ package cpu_pkg;
         logic [1:0] byte_sel;
         logic cond_met;
         logic branch; 
-        logic uses_rn;
-        logic uses_rm;
     } control_bus;
     typedef struct packed{
         logic valid;

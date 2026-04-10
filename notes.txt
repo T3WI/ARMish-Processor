@@ -1,0 +1,28 @@
+reg file is reading in the address offset instead of the data at the address in DM
+
+r1 - result of dot product
+r2 - arr1[i] (exp: )
+r3 - address of arr1 (start: 0)
+r4 - arr2[i] (exp: )
+r5 - address of arr2 (start: 9)
+r7 - number of times loops
+
+dot_product: 
+00:    addx-al r1, r0, r0
+04:    addx-al r3, r0, #0
+08:    addx-al r5, r0, #9
+0c:    addx-al r7, r0, #9
+
+loop:
+10:    cmpx-al r7, r0
+14:    b-eq done
+18:     ldb2l-al r2, [r3, #0]
+1c:    ldb2l-al r4, [r5, #0]
+20:    mulx-al r2, r2, r4 
+24:    addx-al r1, r1, r2 
+28:    addx-al r3, r3, #1
+2c:    addx-al r5, r5, #1
+30:    subx-al r7, r7, #1
+34:    b-al loop
+done: 
+38:    bx-al lr

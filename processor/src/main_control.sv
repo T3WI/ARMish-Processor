@@ -10,8 +10,6 @@ module main_control(
     logic rw1, rw2, mw, mr, m2r;
     logic clb_result;
     logic [1:0] intermediate_bytesel;
-    logic intermediate_uses_rn;
-    logic intermediate_uses_rm;
     assign cb.i = stall ? 0 : ib.instr_ctrl[1];
     assign cb.s_or_u = stall ? 0 : ib.instr_ctrl[0];
     assign cb.instr_class = instr_t'(ib.instr_type);
@@ -27,8 +25,6 @@ module main_control(
     assign cb.cond_met = stall ? 0 : clb_result;
     assign cb.byte_sel = stall ? 0 : intermediate_bytesel;
 
-    assign cb.uses_rn = intermediate_uses_rn;
-    assign cb.uses_rm = intermediate_uses_rm;
 
     cond_logic_block clb(
         .cond_met(clb_result), 
@@ -43,8 +39,6 @@ module main_control(
         m2r = 0;                           // 0 by default (ALU out)
         mr = 0;
         intermediate_bytesel = 2'b00;
-        intermediate_uses_rn = 0;
-        intermediate_uses_rm = 0;
         case(ib.instr_type)
             B: 
             begin
@@ -63,8 +57,6 @@ module main_control(
                     rw2 = 0;
                     mw = 1;
                     mr = 0;
-                    intermediate_uses_rn = 1;
-                    intermediate_uses_rm = 1;
                     // STW/STB2H/STB2L (option 1)
                     case(mem_op_t'(ib.opcode[3:1])) 
                         STW: intermediate_bytesel = 2'b11;
@@ -78,8 +70,6 @@ module main_control(
                     rw2 = 0;
                     mw = 0;                     // mem shouldn't be written during ldr
                     mr = 1;
-                    intermediate_uses_rn = 1;
-                    intermediate_uses_rm = 1;
                     // LDW/LDB2H/LDB2L
                     case(mem_op_t'(ib.opcode[3:1])) 
                         LDW: intermediate_bytesel = 2'b11;
@@ -109,8 +99,6 @@ module main_control(
                 mr = 0;
                 m2r = 0;
                 intermediate_bytesel = 2'b00;
-                intermediate_uses_rn = 1;
-                intermediate_uses_rm = ~ib.instr_ctrl[1];
             end
             default:
             begin 
